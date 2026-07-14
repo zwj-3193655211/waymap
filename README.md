@@ -1,12 +1,12 @@
 # Waymap
 
-> A single-file route-planning map for field trips.
+> A single-file route-planning map for trips, field studies, and excursions.
 
-Drop waypoints on the AMap, draw polylines between them, track which stops are done, then **export the whole trip as a self-contained HTML file** that anyone can open in a browser — no install, no server.
+Drop waypoints on the map, draw polylines between them, mark each stop as done / todo, then **export the whole trip as a self-contained HTML file** — anyone can open it in a browser, no install, no server.
 
 ## Features
 
-- Add / edit / drag waypoints on the AMap
+- Add / edit waypoints on the map
 - Draw multi-segment routes by connecting stops
 - Mark each stop as todo / done with progress tracking
 - Search places, switch between AMap / Satellite / Dark basemaps
@@ -23,8 +23,23 @@ Drop waypoints on the AMap, draw polylines between them, track which stops are d
 ## Getting started
 
 1. Apply for a free AMap key (see `key获取方法.txt`)
+
 2. Open `实践行.html` and paste the key when prompted
-3. Start dropping pins
+
+3. Start searching landmarks, drawing routes, planning stop tasks
+
+
+## How to use
+
+The right-side panel is editable — add tags and edit notes here.
+
+![image-20260714163826364](ExamplePicture/image-20260714163826364.png)
+
+![image-20260714164414492](ExamplePicture/image-20260714164414492.png)
+
+Pick the next stop to add a route segment, or delete the current stop.
+
+![image-20260714164812825](ExamplePicture/image-20260714164812825.png)
 
 ## Built for
 
