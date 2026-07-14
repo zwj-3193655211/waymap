@@ -4015,6 +4015,12 @@ svg.leaflet-image-layer.leaflet-interactive path {
     routeLines.forEach(rl => { rl.on('mouseover', showDistLabels); rl.on('mouseout', hideDistLabels); });
     segLines.forEach(l => { l.on('mouseover', showDistLabels); l.on('mouseout', hideDistLabels); });
 
+    // 兜底：Leaflet 的 polyline mouseout 在滚轮缩放 / 拖动 / 快速切换时不一定触发，
+    // 一旦卡住 dist-label 就永久显示。所以额外监听地图层面的"用户离开"事件来强制 hide。
+    map.on('movestart', hideDistLabels);
+    map.on('zoomstart', hideDistLabels);
+    map.getContainer().addEventListener('mouseleave', hideDistLabels);
+
     // 站点标记 + 光柱
     nodeData.forEach((node, i) => {
       const marker = createMarker(node, i);
