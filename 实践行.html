@@ -3357,7 +3357,9 @@ svg.leaflet-image-layer.leaflet-interactive path {
       const raw = localStorage.getItem('practice-route-todos-v1');
       if (!raw) return null;
       const data = JSON.parse(raw);
-      if (!Array.isArray(data)) return null;
+      // 防御：空数组等同于"没存过"，应回退到 NODES_DEFAULT，
+      // 否则 `loadData() || ...` 会拿到空数组（truthy）导致 nodeData 变空。
+      if (!Array.isArray(data) || data.length === 0) return null;
       data.forEach(node => {
         if (!node.date) node.date = '';
         if (!node.day) node.day = 1;
@@ -5045,11 +5047,24 @@ svg.leaflet-image-layer.leaflet-interactive path {
 
   (function bootstrapRoute() {
     const saved = loadRouteSegments();
-    if (saved && Array.isArray(saved)) {
+    // 防御 1：如果 localStorage 里存的是空数组、或过滤后没有合法段，
+    // 就不要覆盖 ROUTE_SEGMENTS（保持 NODES_DEFAULT 之后的常量值）。
+    if (saved && Array.isArray(saved) && saved.length > 0) {
       const maxIdx = nodeData.length - 1;
       const valid = saved.filter(s => Array.isArray(s) && s.length === 2 && s[0] <= maxIdx && s[1] <= maxIdx && s[0] !== s[1]);
-      ROUTE_SEGMENTS.length = 0;
-      ROUTE_SEGMENTS.push(...valid);
+      if (valid.length > 0) {
+        // 防御 2：检查 localStorage 是否覆盖了 nodeData 里的所有节点。
+        // 如果有新节点（用户后加的，比如南昌）没在 localStorage 任何段里出现过，
+        // 说明 localStorage 是过时版本（漏了新增节点的相关段），
+        // 此时不要覆盖，保留 NODES_DEFAULT 之后的常量（这样南昌相关段才能画上）。
+        const referenced = new Set();
+        valid.forEach(([a, b]) => { referenced.add(a); referenced.add(b); });
+        const allCovered = nodeData.every((_, idx) => referenced.has(idx));
+        if (allCovered) {
+          ROUTE_SEGMENTS.length = 0;
+          ROUTE_SEGMENTS.push(...valid);
+        }
+      }
     }
   })();
 
