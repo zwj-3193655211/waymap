@@ -1081,15 +1081,22 @@ svg.leaflet-image-layer.leaflet-interactive path {
     font-size: 10.5px; font-weight: 500;
     color: #2c1f12;
     white-space: nowrap;
-    opacity: 0;
+    opacity: 1;
     transition: opacity 0.25s, transform 0.25s, background 0.2s;
     cursor: grab;
     user-select: none;
     letter-spacing: 0.02em;
     box-shadow: 0 1px 4px rgba(58, 40, 24, 0.10);
   }
-  .dist-label.show { opacity: 1; }
-  .dist-label.show:hover {
+  .dist-label.hidden-by-toggle { opacity: 0; pointer-events: none; }
+  .dist-label.dragging {
+    cursor: grabbing;
+    background: rgba(250, 244, 230, 0.97);
+    border-color: rgba(168, 50, 74, 0.65);
+    box-shadow: 0 4px 16px rgba(58, 40, 24, 0.25);
+    z-index: 2000;
+  }
+  .dist-label:hover {
     background: rgba(250, 244, 230, 0.97);
     border-color: rgba(168, 50, 74, 0.55);
     box-shadow: 0 2px 10px rgba(58, 40, 24, 0.15);
@@ -2350,8 +2357,7 @@ svg.leaflet-image-layer.leaflet-interactive path {
     -webkit-tap-highlight-color: transparent;
   }
   .mobile-fab:active { transform: translateY(1px) scale(0.98); }
-  .mobile-fab.route-fab { left: 16px; }
-  .mobile-fab.station-fab { right: 16px; }
+  .mobile-fab.route-fab { right: 16px; }
 
   /* ===================== 响应式 ===================== */
   @media (max-width: 880px) {
@@ -3003,6 +3009,108 @@ svg.leaflet-image-layer.leaflet-interactive path {
     .route-info .route-item .route-actions { opacity: 0.7 !important; }
     .route-act-btn { width: 24px; height: 24px; font-size: 12px; }
   }
+
+  /* ===================== 距离牌开关按钮 ===================== */
+  .dist-toggle-wrapper {
+    position: fixed;
+    bottom: 24px;
+    left: 24px;
+    z-index: 2000;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    border-radius: 12px;
+    background: rgba(245, 239, 230, 0.94);
+    backdrop-filter: blur(14px) saturate(140%);
+    border: 1px solid rgba(58, 40, 24, 0.20);
+    box-shadow: 0 4px 20px rgba(58, 40, 24, 0.12);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: #2c1f12;
+    letter-spacing: 0.03em;
+    user-select: none;
+  }
+  .dist-toggle-label {
+    font-size: 10.5px;
+    font-weight: 500;
+    color: #5e4a3a;
+    white-space: nowrap;
+  }
+  .dist-toggle-switch {
+    position: relative;
+    width: 44px;
+    height: 24px;
+    flex-shrink: 0;
+  }
+  .dist-toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+    position: absolute;
+  }
+  .dist-toggle-slider {
+    position: absolute;
+    inset: 0;
+    background: rgba(58, 40, 24, 0.25);
+    border-radius: 24px;
+    cursor: pointer;
+    transition: background 0.25s;
+  }
+  .dist-toggle-slider::before {
+    content: "";
+    position: absolute;
+    left: 3px;
+    bottom: 3px;
+    width: 18px;
+    height: 18px;
+    background: #fff;
+    border-radius: 50%;
+    transition: transform 0.25s;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  }
+  .dist-toggle-switch input:checked + .dist-toggle-slider {
+    background: var(--seal);
+  }
+  .dist-toggle-switch input:checked + .dist-toggle-slider::before {
+    transform: translateX(20px);
+  }
+  @media (max-width: 768px) {
+    .dist-toggle-wrapper {
+      bottom: 16px;
+      left: 12px;
+      padding: 8px 12px;
+      gap: 8px;
+      font-size: 10px;
+      border-radius: 10px;
+    }
+    .dist-toggle-label {
+      font-size: 9.5px;
+    }
+    .dist-toggle-switch {
+      width: 40px;
+      height: 22px;
+    }
+    .dist-toggle-slider::before {
+      width: 16px;
+      height: 16px;
+      left: 2px;
+      bottom: 3px;
+    }
+    .dist-toggle-switch input:checked + .dist-toggle-slider::before {
+      transform: translateX(18px);
+    }
+  }
+  @media (max-width: 380px) {
+    .dist-toggle-wrapper {
+      bottom: 10px;
+      left: 8px;
+      padding: 6px 10px;
+      gap: 6px;
+      border-radius: 8px;
+    }
+    .dist-toggle-label { font-size: 8.5px; }
+  }
 </style>
 </head>
 <body>
@@ -3025,7 +3133,7 @@ svg.leaflet-image-layer.leaflet-interactive path {
           <button class="char-nav-btn" id="charNextBtn" title="前进到下一个点">▶</button>
         </div>
         <div class="layer-switcher">
-          <button class="layer-btn active" data-layer="amap">高德</button>
+          <button class="layer-btn active" data-layer="amap">图纸</button>
           <button class="layer-btn" data-layer="satellite">卫星</button>
           <button class="layer-btn" data-layer="dark">深色</button>
         </div>
@@ -3048,6 +3156,14 @@ svg.leaflet-image-layer.leaflet-interactive path {
 
   <main class="app-main">
     <div id="map"></div>
+    <!-- 距离牌显示开关 -->
+    <div class="dist-toggle-wrapper" id="distToggleWrapper">
+      <span class="dist-toggle-label">距离牌</span>
+      <label class="dist-toggle-switch">
+        <input type="checkbox" id="distToggleCheckbox" checked>
+        <span class="dist-toggle-slider"></span>
+      </label>
+    </div>
 
     <!-- Route overview -->
     <div class="route-info" id="routeInfo">
@@ -3065,7 +3181,6 @@ svg.leaflet-image-layer.leaflet-interactive path {
     <!-- 移动端面板遮罩 & 浮动按钮 -->
     <div class="mobile-panel-overlay" id="mobilePanelOverlay"></div>
     <button class="mobile-fab route-fab" id="mobileRouteFab">☰ 路线</button>
-    <button class="mobile-fab station-fab" id="mobileStationFab">📍 站点</button>
 
 
     <!-- Todo Side Panel -->
@@ -3330,9 +3445,8 @@ svg.leaflet-image-layer.leaflet-interactive path {
   let nodeData = loadData() || JSON.parse(JSON.stringify(NODES_DEFAULT));
   let selectedPriority = 'normal';
   let map, markers = [], routeLines = [], glowLines = [];
-  let distMarkers = [], segLines = [];
-  let labelPlacementSegIdx = -1, labelPlacementHighlight = null, labelPlacementGuide = null;
-  let longPressTimer = null, longPressSegIdx = -1;
+  let distMarkers = [];
+  // labelPlacement/longPress vars removed — replaced by toggle + drag
   function measureLabel(text) {
     const span = document.createElement('span');
     span.className = 'dist-label';
@@ -3793,91 +3907,9 @@ svg.leaflet-image-layer.leaflet-interactive path {
     return map.containerPointToLatLng({ x: a.x + abx * t, y: a.y + aby * t });
   }
 
-  function enterPlacementMode(segIdx) {
-    exitPlacementMode();
-    labelPlacementSegIdx = segIdx;
-    const [fi, ti] = ROUTE_SEGMENTS[segIdx];
-    labelPlacementHighlight = L.polyline([
-      [nodeData[fi].lat, nodeData[fi].lng],
-      [nodeData[ti].lat, nodeData[ti].lng]
-    ], {
-      color: '#5e4a3a', weight: 5, opacity: 0.85, dashArray: '6 4', interactive: false,
-    }).addTo(map);
-    labelPlacementGuide = L.circleMarker([0, 0], {
-      radius: 6, color: '#5e4a3a', fillColor: '#5e4a3a',
-      fillOpacity: 0.5, weight: 2, opacity: 0.8, interactive: false,
-    }).addTo(map);
-    labelPlacementGuide.setLatLng(distMarkers[segIdx].getLatLng());
-    labelPlacementGuide._moveHandler = function (e) {
-      if (labelPlacementSegIdx < 0) return;
-      const [fi2, ti2] = ROUTE_SEGMENTS[labelPlacementSegIdx];
-      const snap = closestPointOnSegment(
-        L.latLng(nodeData[fi2].lat, nodeData[fi2].lng),
-        L.latLng(nodeData[ti2].lat, nodeData[ti2].lng), e.latlng
-      );
-      labelPlacementGuide.setLatLng(snap);
-    };
-    map.on('mousemove', labelPlacementGuide._moveHandler);
-  }
+// enterPlacementMode / exitPlacementMode removed — replaced by toggle + drag
 
-  function exitPlacementMode() {
-    if (labelPlacementHighlight) { map.removeLayer(labelPlacementHighlight); labelPlacementHighlight = null; }
-    if (labelPlacementGuide) {
-      if (labelPlacementGuide._moveHandler) map.off('mousemove', labelPlacementGuide._moveHandler);
-      map.removeLayer(labelPlacementGuide); labelPlacementGuide = null;
-    }
-    labelPlacementSegIdx = -1;
-    map.getContainer().style.cursor = '';
-  }
-
-  function bindSegLineEvents() {
-    segLines.forEach(line => {
-      // 悬浮高亮：提示用户可长按进入拖动模式 + 同步显示所有距离标识
-      line.on('mouseover', function () {
-        this.setStyle({ color: '#5e4a3a', opacity: 0.45, weight: 4, dashArray: '6 3' });
-        if (Array.isArray(distMarkers)) {
-          distMarkers.forEach(function (dm) {
-            var el = dm.getElement();
-            if (el) { var s = el.querySelector('.dist-label'); if (s) s.classList.add('show'); }
-          });
-        }
-      });
-      line.on('mouseout', function () {
-        if (longPressTimer) { clearTimeout(longPressTimer); longPressTimer = null; }
-        this.setStyle({ color: 'transparent', opacity: 0.001, weight: 50 });
-        if (labelPlacementSegIdx < 0 && Array.isArray(distMarkers)) {
-          distMarkers.forEach(function (dm) {
-            var el = dm.getElement();
-            if (el) { var s = el.querySelector('.dist-label'); if (s) s.classList.remove('show'); }
-          });
-        }
-      });
-      // 长按（≥600ms）进入放置模式
-      line.on('mousedown', function () {
-        longPressSegIdx = this._segIdx;
-        longPressTimer = setTimeout(() => {
-          if (longPressSegIdx >= 0) {
-            enterPlacementMode(longPressSegIdx);
-            map.getContainer().style.cursor = 'crosshair';
-          }
-          longPressTimer = null;
-        }, 600);
-      });
-      line.on('mouseup', () => { if (longPressTimer) { clearTimeout(longPressTimer); longPressTimer = null; } });
-      // 放置模式下点击任意 segLine 完成放置（不再要求匹配 segIdx，点击即放）
-      line.on('click', function (e) {
-        if (labelPlacementSegIdx < 0) return;
-        L.DomEvent.stopPropagation(e);
-        const [fi, ti] = ROUTE_SEGMENTS[labelPlacementSegIdx];
-        const snap = closestPointOnSegment(
-          L.latLng(nodeData[fi].lat, nodeData[fi].lng),
-          L.latLng(nodeData[ti].lat, nodeData[ti].lng), e.latlng
-        );
-        distMarkers[labelPlacementSegIdx].setLatLng(snap);
-        exitPlacementMode();
-      });
-    });
-  }
+// bindSegLineEvents removed — replaced by toggle + drag
 
   // ====== 地图初始化 ======
   function initMap() {
@@ -3950,18 +3982,6 @@ svg.leaflet-image-layer.leaflet-interactive path {
       routeLines.push(rl);
     });
 
-    segLines = [];
-    ROUTE_SEGMENTS.forEach(([fi, ti]) => {
-      const line = L.polyline([
-        [nodeData[fi].lat, nodeData[fi].lng],
-        [nodeData[ti].lat, nodeData[ti].lng]
-      ], {
-        color: 'transparent', weight: 50, opacity: 0.001,
-        interactive: true, bubblingMouseEvents: false,
-      }).addTo(map);
-      line._segIdx = segLines.length;
-      segLines.push(line);
-    });
 
     distMarkers = [];
     ROUTE_SEGMENTS.forEach(([fi, ti]) => {
@@ -3987,51 +4007,9 @@ svg.leaflet-image-layer.leaflet-interactive path {
       distMarkers.push(dm);
     });
 
-    bindSegLineEvents();
-    // 放置模式下点击地图空白区域直接完成放置（无法取消，ESC 键可退出）
-    map.on('click', function (e) {
-      if (labelPlacementSegIdx < 0) return;
-      const [fi, ti] = ROUTE_SEGMENTS[labelPlacementSegIdx];
-      const snap = closestPointOnSegment(
-        L.latLng(nodeData[fi].lat, nodeData[fi].lng),
-        L.latLng(nodeData[ti].lat, nodeData[ti].lng), e.latlng
-      );
-      distMarkers[labelPlacementSegIdx].setLatLng(snap);
-      exitPlacementMode();
-    });
+// Placement mode click / ESC removed — replaced by toggle + drag
 
-    // ESC 键退出放置模式（唯一取消途径）
-    document.addEventListener('keydown', function (e) {
-      if (e.key === 'Escape' && labelPlacementSegIdx >= 0) {
-        exitPlacementMode();
-      }
-    });
-
-    function showDistLabels() {
-      distMarkers.forEach(dm => {
-        const el = dm.getElement();
-        if (el) { const s = el.querySelector('.dist-label'); if (s) s.classList.add('show'); }
-      });
-    }
-    function hideDistLabels() {
-      if (labelPlacementSegIdx >= 0) return;
-      distMarkers.forEach(dm => {
-        const el = dm.getElement();
-        if (el) {
-          const s = el.querySelector('.dist-label');
-          if (s) s.classList.remove('show');
-        }
-      });
-    }
-    glowLines.forEach(gl => { gl.on('mouseover', showDistLabels); gl.on('mouseout', hideDistLabels); });
-    routeLines.forEach(rl => { rl.on('mouseover', showDistLabels); rl.on('mouseout', hideDistLabels); });
-    segLines.forEach(l => { l.on('mouseover', showDistLabels); l.on('mouseout', hideDistLabels); });
-
-    // 兜底：Leaflet 的 polyline mouseout 在滚轮缩放 / 拖动 / 快速切换时不一定触发，
-    // 一旦卡住 dist-label 就永久显示。所以额外监听地图层面的"用户离开"事件来强制 hide。
-    map.on('movestart', hideDistLabels);
-    map.on('zoomstart', hideDistLabels);
-    map.getContainer().addEventListener('mouseleave', hideDistLabels);
+// showDistLabels / hideDistLabels removed — replaced by toggle + drag
 
     // 站点标记 + 光柱
     nodeData.forEach((node, i) => {
@@ -4052,6 +4030,174 @@ svg.leaflet-image-layer.leaflet-interactive path {
 
     map.on('moveend', () => updateMarkersDoneState());
     map.on('zoomend', () => updateMarkersDoneState());
+
+    // ====== 距离牌全局开关 ======
+    initDistLabelToggle();
+    // ====== 距离牌拖动交互 ======
+    initDistLabelDrag();
+  }
+
+  // ====== 距离牌全局开关 ======
+  function initDistLabelToggle() {
+    const checkbox = document.getElementById('distToggleCheckbox');
+    if (!checkbox) return;
+
+    function applyToggle() {
+      const visible = checkbox.checked;
+      if (Array.isArray(distMarkers)) {
+        distMarkers.forEach(dm => {
+          const el = dm.getElement();
+          if (el) {
+            const s = el.querySelector('.dist-label');
+            if (s) {
+              if (visible) s.classList.remove('hidden-by-toggle');
+              else s.classList.add('hidden-by-toggle');
+            }
+          }
+        });
+      }
+    }
+
+    checkbox.addEventListener('change', applyToggle);
+    // 初始状态：默认显示
+    applyToggle();
+  }
+
+  // 暴露给 syncRouteOverlays / rebuildMapOverlays 在重建后重新应用开关状态
+  function reapplyDistLabelToggle() {
+    const checkbox = document.getElementById('distToggleCheckbox');
+    if (!checkbox || !checkbox.checked) return;
+    if (Array.isArray(distMarkers)) {
+      distMarkers.forEach(dm => {
+        const el = dm.getElement();
+        if (el) {
+          const s = el.querySelector('.dist-label');
+          if (s) s.classList.remove('hidden-by-toggle');
+        }
+      });
+    }
+  }
+
+  // ====== 距离牌拖动交互（仅当开关打开时） ======
+  function initDistLabelDrag() {
+    let dragSegIdx = -1;
+    let dragMarker = null;
+    let isDragging = false;
+    const mapContainer = map.getContainer();
+
+    function getDistLabelSegIdx(target) {
+      // 查找被点击的 .dist-label 属于哪个 distMarker
+      if (!Array.isArray(distMarkers)) return -1;
+      for (let i = 0; i < distMarkers.length; i++) {
+        const el = distMarkers[i].getElement();
+        if (el && el.contains(target)) return i;
+      }
+      return -1;
+    }
+
+    function startDrag(segIdx, clientX, clientY) {
+      const checkbox = document.getElementById('distToggleCheckbox');
+      if (!checkbox || !checkbox.checked) return; // 开关关闭时不响应拖拽
+
+      dragSegIdx = segIdx;
+      dragMarker = distMarkers[segIdx];
+      isDragging = true;
+
+      const el = dragMarker.getElement();
+      if (el) {
+        const s = el.querySelector('.dist-label');
+        if (s) s.classList.add('dragging');
+      }
+      mapContainer.style.cursor = 'grabbing';
+
+      // 防止地图拖动
+      map.dragging.disable();
+    }
+
+    function moveDrag(clientX, clientY) {
+      if (!isDragging || dragSegIdx < 0) return;
+
+      const [fi, ti] = ROUTE_SEGMENTS[dragSegIdx];
+      const containerPoint = L.point(
+        clientX - mapContainer.getBoundingClientRect().left,
+        clientY - mapContainer.getBoundingClientRect().top
+      );
+      const latlng = map.containerPointToLatLng(containerPoint);
+      const snap = closestPointOnSegment(
+        L.latLng(nodeData[fi].lat, nodeData[fi].lng),
+        L.latLng(nodeData[ti].lat, nodeData[ti].lng),
+        latlng
+      );
+      distMarkers[dragSegIdx].setLatLng(snap);
+    }
+
+    function endDrag() {
+      if (!isDragging) return;
+      isDragging = false;
+
+      if (dragMarker) {
+        const el = dragMarker.getElement();
+        if (el) {
+          const s = el.querySelector('.dist-label');
+          if (s) s.classList.remove('dragging');
+        }
+      }
+      mapContainer.style.cursor = '';
+      map.dragging.enable();
+      dragSegIdx = -1;
+      dragMarker = null;
+    }
+
+    // 鼠标事件（桌面端）
+    mapContainer.addEventListener('mousedown', function(e) {
+      const segIdx = getDistLabelSegIdx(e.target);
+      if (segIdx >= 0) {
+        e.preventDefault();
+        e.stopPropagation();
+        startDrag(segIdx, e.clientX, e.clientY);
+      }
+    });
+
+    document.addEventListener('mousemove', function(e) {
+      if (isDragging) {
+        e.preventDefault();
+        moveDrag(e.clientX, e.clientY);
+      }
+    });
+
+    document.addEventListener('mouseup', function(e) {
+      if (isDragging) {
+        e.preventDefault();
+        endDrag();
+      }
+    });
+
+    // 触摸事件（移动端）
+    mapContainer.addEventListener('touchstart', function(e) {
+      if (e.touches.length !== 1) return;
+      const touch = e.touches[0];
+      const segIdx = getDistLabelSegIdx(e.target);
+      if (segIdx >= 0) {
+        e.preventDefault();
+        e.stopPropagation();
+        startDrag(segIdx, touch.clientX, touch.clientY);
+      }
+    }, { passive: false });
+
+    document.addEventListener('touchmove', function(e) {
+      if (isDragging && e.touches.length === 1) {
+        e.preventDefault();
+        const touch = e.touches[0];
+        moveDrag(touch.clientX, touch.clientY);
+      }
+    }, { passive: false });
+
+    document.addEventListener('touchend', function(e) {
+      if (isDragging) {
+        e.preventDefault();
+        endDrag();
+      }
+    });
   }
 
   // ====== 预加载瓦片：提前把整个路线范围的所有瓦片下载到浏览器缓存 ======
@@ -5022,17 +5168,9 @@ svg.leaflet-image-layer.leaflet-interactive path {
 
   // ====== 移动端控制 ======
   const mobileRouteFab = document.getElementById('mobileRouteFab');
-  const mobileStationFab = document.getElementById('mobileStationFab');
-
   if (mobileRouteFab) {
     mobileRouteFab.addEventListener('click', () => {
       expandRoute();
-    });
-  }
-  if (mobileStationFab) {
-    mobileStationFab.addEventListener('click', () => {
-      if (activeNodeId) openNode(activeNodeId);
-      else if (nodeData.length > 0) openNode(nodeData[0].id);
     });
   }
   if (mobileOverlay) {
@@ -5295,8 +5433,6 @@ svg.leaflet-image-layer.leaflet-interactive path {
     glowLines = [];
     if (Array.isArray(distMarkers)) distMarkers.forEach(dm => map.removeLayer(dm));
     distMarkers = [];
-    if (Array.isArray(segLines)) segLines.forEach(s => map.removeLayer(s));
-    segLines = [];
 
     ROUTE_SEGMENTS.forEach(([fi, ti]) => {
       const fn = nodeData[fi], tn = nodeData[ti];
@@ -5319,36 +5455,11 @@ svg.leaflet-image-layer.leaflet-interactive path {
       dm.addTo(map);
       distMarkers.push(dm);
 
-      const segLine = L.polyline(segCoords, { color: 'transparent', weight: 50, opacity: 0.001, interactive: true, bubblingMouseEvents: false }).addTo(map);
-      segLine._segIdx = segLines.length;
-      segLines.push(segLine);
     });
 
-    setTimeout(function () {
-      if (Array.isArray(distMarkers)) distMarkers.forEach(function (dm) {
-        var el = dm.getElement();
-        if (el) { var s = el.querySelector('.dist-label'); if (s) s.classList.add('show'); }
-      });
-    }, 100);
-    bindSegLineEvents();
-    // 给光带/墨线补上悬浮显示距离标识（initMap 里有这里漏了同步）
-    const _showDistLabels = function () {
-      if (!Array.isArray(distMarkers)) return;
-      distMarkers.forEach(function (dm) {
-        var el = dm.getElement();
-        if (el) { var s = el.querySelector('.dist-label'); if (s) s.classList.add('show'); }
-      });
-    };
-    const _hideDistLabels = function () {
-      if (labelPlacementSegIdx >= 0) return;
-      if (!Array.isArray(distMarkers)) return;
-      distMarkers.forEach(function (dm) {
-        var el = dm.getElement();
-        if (el) { var s = el.querySelector('.dist-label'); if (s) s.classList.remove('show'); }
-      });
-    };
-    glowLines.forEach(function (gl) { gl.on('mouseover', _showDistLabels); gl.on('mouseout', _hideDistLabels); });
-    routeLines.forEach(function (rl) { rl.on('mouseover', _showDistLabels); rl.on('mouseout', _hideDistLabels); });
+    // dist-labels now controlled by toggle, no auto-show
+    reapplyDistLabelToggle();
+    // bindSegLineEvents + hover removed — replaced by toggle + drag
   }
   function deleteSegmentAt(idx) {
     if (idx < 0 || idx >= ROUTE_SEGMENTS.length) return;
@@ -5545,8 +5656,6 @@ svg.leaflet-image-layer.leaflet-interactive path {
     markers = [];
     if (Array.isArray(distMarkers)) distMarkers.forEach(dm => map.removeLayer(dm));
     distMarkers = [];
-    if (Array.isArray(segLines)) segLines.forEach(s => map.removeLayer(s));
-    segLines = [];
     if (Array.isArray(routeLines)) routeLines.forEach(rl => map.removeLayer(rl));
     routeLines = [];
     if (Array.isArray(glowLines)) glowLines.forEach(gl => map.removeLayer(gl));
@@ -5580,27 +5689,12 @@ svg.leaflet-image-layer.leaflet-interactive path {
       dm.addTo(map);
       distMarkers.push(dm);
 
-      // 重建交互层 segLine
-      const segLine = L.polyline([
-        [fn.lat, fn.lng], [tn.lat, tn.lng]
-      ], {
-        color: 'transparent', weight: 50, opacity: 0.001,
-        interactive: true, bubblingMouseEvents: false,
-      }).addTo(map);
-      segLine._segIdx = segLines.length;
-      segLines.push(segLine);
     });
 
-    bindSegLineEvents();
+    // bindSegLineEvents removed — replaced by toggle + drag
 
-    setTimeout(() => {
-      if (Array.isArray(distMarkers)) {
-        distMarkers.forEach(dm => {
-          const el = dm.getElement();
-          if (el) { const s = el.querySelector('.dist-label'); if (s) s.classList.add('show'); }
-        });
-      }
-    }, 100);
+    // dist-labels now controlled by toggle, no auto-show
+    reapplyDistLabelToggle();
 
     bindMarkerDblClick();
     updateMarkersDoneState();
@@ -5659,6 +5753,18 @@ svg.leaflet-image-layer.leaflet-interactive path {
         src = src.replace(
           /(\/\/ BEGIN_ROUTE_SEGMENTS_DEFAULT\s*const ROUTE_SEGMENTS\s*=\s*)\[[\s\S]*?\];(\s*\/\/ END_ROUTE_SEGMENTS_DEFAULT)/,
           '$1' + segmentsJSON + ';$2'
+        );
+
+        // 替换 nodeData 初始化：跳过 localStorage，直接使用内嵌 NODES_DEFAULT
+        src = src.replace(
+          /let nodeData = loadData\(\) \|\| JSON\.parse\(JSON\.stringify\(NODES_DEFAULT\)\);/g,
+          'let nodeData = JSON.parse(JSON.stringify(NODES_DEFAULT));'
+        );
+
+        // 移除 bootstrapRoute IIFE：防止 localStorage 覆盖 ROUTE_SEGMENTS
+        src = src.replace(
+          /\(\s*function bootstrapRoute\(\)\s*\{[\s\S]*?\}\s*\)\s*\(\s*\)\s*;/,
+          '/* bootstrapRoute removed — ROUTE_SEGMENTS uses file default */'
         );
 
         appScript.textContent = src;
