@@ -4064,15 +4064,21 @@ svg.leaflet-image-layer.leaflet-interactive path {
   }
 
   // 暴露给 syncRouteOverlays / rebuildMapOverlays 在重建后重新应用开关状态
+  // 注意:必须同时处理"开"和"关"两种状态——新建的 .dist-label 是干净 DOM,
+  // 开关关闭时也得补上 hidden-by-toggle class,否则会全部默认显示
   function reapplyDistLabelToggle() {
     const checkbox = document.getElementById('distToggleCheckbox');
-    if (!checkbox || !checkbox.checked) return;
+    if (!checkbox) return;
+    const visible = checkbox.checked;
     if (Array.isArray(distMarkers)) {
       distMarkers.forEach(dm => {
         const el = dm.getElement();
         if (el) {
           const s = el.querySelector('.dist-label');
-          if (s) s.classList.remove('hidden-by-toggle');
+          if (s) {
+            if (visible) s.classList.remove('hidden-by-toggle');
+            else s.classList.add('hidden-by-toggle');
+          }
         }
       });
     }
