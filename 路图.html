@@ -6136,6 +6136,7 @@ svg.leaflet-image-layer.leaflet-interactive path {
       updateMarkerLabelCore(core, defaultLabel, nodeData[idx]);
       if (nodeBadge) nodeBadge.textContent = getNodeBadgeDisplayText(nodeData[idx], idx);
       saveData();
+      renderRouteInfo();
       return;
     }
 
@@ -6152,13 +6153,14 @@ svg.leaflet-image-layer.leaflet-interactive path {
 
     panelLabelInput.classList.remove('invalid');
 
-    // 通过 → 写回 + 立即改 marker 圆圈 + 顶部徽章
+    // 通过 → 写回 + 立即改 marker 圆圈 + 顶部徽章 + 刷新节点列表
     nodeData[idx].label = v;
     const marker = markers[idx];
     const core = marker?.getElement()?.querySelector('.station-marker .sm-core');
     updateMarkerLabelCore(core, v, nodeData[idx]);
     if (nodeBadge) nodeBadge.textContent = v;
     saveData();
+    renderRouteInfo();
   });
 
   // 到达字数上限时再按输入字符，给用户明确提示（不截断）
