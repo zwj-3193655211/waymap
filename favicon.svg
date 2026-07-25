@@ -10,8 +10,7 @@
   <!-- 主方框（轻微倾斜 -2°）-->
   <g transform="rotate(-2 32 32)">
     <rect x="4" y="4" width="56" height="56" rx="6" fill="url(#bg)" stroke="#a8324a" stroke-width="3"/>
-    <text x="32" y="21" font-family="'Ma Shan Zheng','STKaiti','Kaiti SC','楷体',cursive" font-size="17" font-weight="400" fill="#a8324a" text-anchor="middle">三</text>
-    <text x="32" y="38" font-family="'Ma Shan Zheng','STKaiti','Kaiti SC','楷体',cursive" font-size="17" font-weight="400" fill="#a8324a" text-anchor="middle">下</text>
-    <text x="32" y="55" font-family="'Ma Shan Zheng','STKaiti','Kaiti SC','楷体',cursive" font-size="17" font-weight="400" fill="#a8324a" text-anchor="middle">乡</text>
+    <text x="32" y="27" font-family="'STXingkai','华文行楷','STXinwei','华文新魏','STLiti','华文隶书','Ma Shan Zheng','STKaiti','Kaiti SC','KaiTi','楷体',cursive" font-size="24" font-weight="400" fill="#a8324a" text-anchor="middle">路</text>
+    <text x="32" y="53" font-family="'STXingkai','华文行楷','STXinwei','华文新魏','STLiti','华文隶书','Ma Shan Zheng','STKaiti','Kaiti SC','KaiTi','楷体',cursive" font-size="24" font-weight="400" fill="#a8324a" text-anchor="middle">图</text>
   </g>
 </svg>

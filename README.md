@@ -9,14 +9,14 @@ Drop waypoints on the map, draw polylines between them, mark each stop as done /
 - Add / edit waypoints on the map
 - Draw multi-segment routes by connecting stops
 - Mark each stop as todo / done with progress tracking
-- Search places, switch between AMap / Satellite / Dark basemaps
+- Search places, switch between Paper (AMap) / Satellite basemaps
 - Export → one HTML file (the killer feature for sharing with teammates)
 
 ## Files
 
 | File | What it is |
 |---|---|
-| `实践行.html` | The app — open it in any modern browser |
+| `路图.html` | The app — open it in any modern browser |
 | `favicon.svg` | Favicon |
 | `key获取方法.txt` | How to get a free AMap Web Service API key |
 
@@ -24,7 +24,7 @@ Drop waypoints on the map, draw polylines between them, mark each stop as done /
 
 1. Apply for a free AMap key (see `key获取方法.txt`)
 
-2. Open `实践行.html` and paste the key when prompted
+2. Open `路图.html` and paste the key when prompted
 
 3. Start searching landmarks, drawing routes, planning stop tasks
 
