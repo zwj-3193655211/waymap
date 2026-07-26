@@ -5153,6 +5153,22 @@ svg.leaflet-image-layer.leaflet-interactive path {
     });
   }
 
+  // 同步 marker 上的节点名 / 自定义 label：名 / 标签 / 编号 任意变更后调用
+  function refreshMarkerLabels() {
+    markers.forEach((m, i) => {
+      const node = nodeData[i];
+      if (!node) return;
+      const el = m.getElement();
+      if (!el) return;
+      const root = el.querySelector('.station-marker');
+      if (!root) return;
+      const core = root.querySelector('.sm-core');
+      const labelText = (node.label && node.label.trim()) || String(i + 1).padStart(2, '0');
+      const labelSize = getMarkerLabelFontSize(labelText);
+      if (core) core.innerHTML = '<span class="sm-label" style="font-size:' + labelSize + 'px">' + escapeHtml(labelText) + '</span>';
+    });
+  }
+
   // 根据标签字数计算圆内应使用的字号，保证在 29px 圆内居中显示
   function getMarkerLabelFontSize(text) {
     const len = String(text || '').trim().length;
@@ -5615,6 +5631,9 @@ svg.leaflet-image-layer.leaflet-interactive path {
         node.name = newVal;
         saveAllData();
         updateMarkersDoneState();
+        refreshMarkerLabels(); // 更新地图上 marker 圆心文字
+        renderRouteInfo();     // 更新节点列表面板
+        updateCharacterStatus(); // 更新顶部红星状态条文字
       }
       openNode(activeNodeId);
     };
@@ -5672,6 +5691,8 @@ svg.leaflet-image-layer.leaflet-interactive path {
         node.date = newDate;
         node.subtitle = newSub;
         saveAllData();
+        renderRouteInfo(); // 更新节点列表中的日期/副标题
+        updateCharacterStatus(); // 同步顶部状态条
       }
       openNode(activeNodeId);
     };
