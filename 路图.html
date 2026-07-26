@@ -1498,7 +1498,7 @@ svg.leaflet-image-layer.leaflet-interactive path {
     line-height: 1;
     text-align: center;
     letter-spacing: 0;
-    pointer-events: none;
+    pointer-events: none !important;
   }
   /* 内圈装饰：淡色水纹 */
   .sm-core::before {
@@ -1722,15 +1722,15 @@ svg.leaflet-image-layer.leaflet-interactive path {
 
   /* ====== idle：微弱呼吸 ====== */
   .character-wrap.idle .ch-light {
-    opacity: 0.30;
-    transform: translate3d(-50%, -50%, 0) scale(0.55);
+    opacity: 0.95;
+    transform: translate3d(-50%, -50%, 0) scale(0.7);
     animation: starIdle 3s ease-in-out infinite;
   }
   .character-wrap.idle .ch-light::before,
-  .character-wrap.idle .ch-light::after { animation: none; opacity: 0.25; }
+  .character-wrap.idle .ch-light::after { animation: none; opacity: 0.7; }
   @keyframes starIdle {
-    0%,100% { opacity: 0.25; }
-    50%     { opacity: 0.40; }
+    0%,100% { opacity: 0.85; }
+    50%     { opacity: 1.0; }
   }
 
   /* idle 时隐藏行走尾迹 */
@@ -2554,82 +2554,6 @@ svg.leaflet-image-layer.leaflet-interactive path {
   }
 
   .route-info .route-list { font-family: var(--font-mono); font-size: 11.5px; line-height: 1.85; }
-  /* 回收站 */
-  .trash-badge-btn {
-    width: 18px; height: 18px;
-    border-radius: 9px;
-    background: var(--seal);
-    color: #fff;
-    font-size: 9px;
-    font-family: var(--font-mono);
-    border: none;
-    cursor: pointer;
-    display: flex; align-items: center; justify-content: center;
-    transition: all 0.18s;
-    opacity: 0;
-    margin: 0 2px;
-    line-height: 1;
-  }
-  .trash-badge-btn.visible { opacity: 1; }
-  .trash-badge-btn:hover { background: var(--ink); transform: scale(1.15); }
-  .trash-panel {
-    border-top: 1px solid var(--line-soft);
-    padding: 6px 4px 8px;
-    font-family: var(--font-mono);
-    font-size: 10px;
-    max-height: 160px;
-    overflow-y: auto;
-    background: rgba(255,255,255,0.02);
-    display: none;
-  }
-  .trash-panel.has-items { display: block; }
-  .trash-hint {
-    color: var(--text-3);
-    text-align: center;
-    padding: 8px 0;
-    font-size: 10px;
-  }
-  .trash-item {
-    display: flex; align-items: center; gap: 4px;
-    padding: 3px 2px;
-    border-radius: 4px;
-    color: var(--text-2);
-  }
-  .trash-item:hover { background: rgba(255,255,255,0.04); }
-  .trash-arrow { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .trash-age { color: var(--text-3); font-size: 9px; flex-shrink: 0; }
-  .trash-restore-btn {
-    width: 18px; height: 18px;
-    border-radius: 4px;
-    border: 1px solid var(--line);
-    background: transparent;
-    color: var(--ink);
-    font-size: 11px;
-    cursor: pointer;
-    display: flex; align-items: center; justify-content: center;
-    flex-shrink: 0;
-    transition: all 0.15s;
-  }
-  .trash-restore-btn:hover { background: var(--ink); color: #fff; }
-  .trash-actions {
-    display: flex; gap: 4px;
-    margin-top: 6px;
-    padding-top: 5px;
-    border-top: 1px dashed var(--line-soft);
-  }
-  .trash-undo-btn, .trash-empty-btn {
-    flex: 1; padding: 4px;
-    border-radius: 5px;
-    border: 1px solid var(--line);
-    background: transparent;
-    color: var(--text-1);
-    font-family: var(--font-mono);
-    font-size: 10px;
-    cursor: pointer;
-    transition: all 0.15s;
-  }
-  .trash-undo-btn:hover { border-color: var(--ink); color: var(--ink); background: rgba(6,182,212,0.08); }
-  .trash-empty-btn:hover { border-color: var(--seal); color: var(--seal); background: rgba(168,50,74,0.08); }
   .route-empty {
     padding: 24px 12px;
     text-align: center;
@@ -3810,15 +3734,11 @@ svg.leaflet-image-layer.leaflet-interactive path {
     <div class="route-info" id="routeInfo">
       <div class="title">
         <span>节点列表</span>
-        <button class="trash-badge-btn" id="trashBadge" title="回收站（可撤销）" style="display:none">0</button>
         <button class="route-toggle-btn" id="routeToggleBtn" title="隐藏节点面板">✕</button>
       </div>
         <div class="route-info-content">
           <div class="route-list" id="routeList"></div>
-        <div class="trash-panel" id="trashPanel">
-          <div class="trash-hint">回收站空空如也</div>
         </div>
-      </div>
     </div>
     <div class="route-expand-tab" id="routeExpandTab">节点列表</div>
 
@@ -4208,7 +4128,6 @@ svg.leaflet-image-layer.leaflet-interactive path {
   // nodeData / ROUTE_SEGMENTS / characterNodeIndex 全部指向当前 trip（同一数组引用）
   let nodeData = getCurrentTrip().nodeData;
   let ROUTE_SEGMENTS = getCurrentTrip().routeSegments;
-  let deletedSegments = []; // {tripId, seg, deletedAt}
   let characterNodeIndex = getCurrentTrip().characterIndex;
 
   // ========== 旧 key 兼容读写 ==========
@@ -4331,7 +4250,6 @@ svg.leaflet-image-layer.leaflet-interactive path {
   }
   // 必须在最早执行，避免页面闪一下浅色
   initTheme();
-  _loadTrash(); // 加载当前行程的回收站
 
   // ====== 行程切换器（多行程） ======
   function genTripId() {
@@ -4347,14 +4265,10 @@ svg.leaflet-image-layer.leaflet-interactive path {
   function switchTrip(tripId) {
     const target = trips.find(t => t.id === tripId);
     if (!target || target.id === currentTripId) return;
-    // 保存当前行程的 trash
-    _saveTrash();
     currentTripId = target.id;
     nodeData = target.nodeData;
     ROUTE_SEGMENTS = target.routeSegments;
     characterNodeIndex = target.characterIndex;
-    // 切换到新行程的 trash
-    _loadTrash();
     saveCurrentTripId();
     // 重置 UI 与地图覆盖物
     closePanel();
@@ -6108,31 +6022,6 @@ svg.leaflet-image-layer.leaflet-interactive path {
     await moveCharacterTo(characterNodeIndex + 1);
   });
 
-  // ====== 回收站交互======
-  document.getElementById('trashBadge')?.addEventListener('click', () => {
-    const panel = document.getElementById('trashPanel');
-    panel.classList.toggle('has-items', deletedSegments.length > 0);
-    panel.style.display = panel.classList.contains('has-items') ? 'block' : 'none';
-  });
-  document.getElementById('trashPanel')?.addEventListener('click', (e) => {
-    const btn = e.target.closest('.trash-restore-btn');
-    if (btn) {
-      const ti = Number(btn.dataset.ti);
-      if (!isNaN(ti) && deletedSegments[ti]) {
-        const top = deletedSegments.splice(ti, 1)[0];
-        const insertAt = Math.min(top.idx, ROUTE_SEGMENTS.length);
-        ROUTE_SEGMENTS.splice(insertAt, 0, top.seg);
-        _saveTrash();
-        updateTrashUI();
-        applyRouteUpdate();
-        showToast('↩ 已恢复：' + top.fromName + ' → ' + top.toName, 'success');
-      }
-      return;
-    }
-    if (e.target.id === 'trashUndoBtn') undoLastDelete();
-    if (e.target.id === 'trashEmptyBtn') emptyTrash();
-  });
-
   // ====== 节点列表事件（点击任意节点 → 红星移动到该点；点击上下按钮 → 调整排序）======
     document.getElementById('routeList').addEventListener('click', async (e) => {
       const moveBtn = e.target.closest('.route-act-btn');
@@ -6475,83 +6364,6 @@ svg.leaflet-image-layer.leaflet-interactive path {
     reapplyDistLabelToggle();
     // bindSegLineEvents + hover removed — replaced by toggle + drag
   }
-  // ====== 回收站（撤销删除）======
-  const TRASH_KEY = 'practice-route-trash-v1';
-  function _loadTrash() {
-    try {
-      const map = JSON.parse(localStorage.getItem(TRASH_KEY) || '{}');
-      deletedSegments = (map[currentTripId] || []).filter(e =>
-        Date.now() - e.deletedAt < 7 * 24 * 3600 * 1000 // 7 天过期
-      );
-    } catch (_) { deletedSegments = []; }
-    updateTrashUI();
-  }
-  function _saveTrash() {
-    try {
-      const map = JSON.parse(localStorage.getItem(TRASH_KEY) || '{}');
-      map[currentTripId] = deletedSegments;
-      localStorage.setItem(TRASH_KEY, JSON.stringify(map));
-    } catch (_) {}
-  }
-  function addToTrash(seg, idx, fi, ti) {
-    deletedSegments.unshift({ tripId: currentTripId, seg, idx, fi, ti,
-      fromName: nodeData[fi]?.name, toName: nodeData[ti]?.name, deletedAt: Date.now() });
-    if (deletedSegments.length > 50) deletedSegments = deletedSegments.slice(0, 50);
-    _saveTrash();
-    updateTrashUI();
-  }
-  function undoLastDelete() {
-    if (!deletedSegments.length) { showToast('📭 回收站为空', 'info'); return; }
-    const top = deletedSegments.shift();
-    if (!top) return;
-    // 恢复：如果原位置已超出范围则追加到末尾
-    const insertAt = Math.min(top.idx, ROUTE_SEGMENTS.length);
-    ROUTE_SEGMENTS.splice(insertAt, 0, top.seg);
-    _saveTrash();
-    updateTrashUI();
-    applyRouteUpdate();
-    showToast('↩ 已恢复：' + top.fromName + ' → ' + top.toName, 'success');
-  }
-  function emptyTrash() {
-    if (!deletedSegments.length) return;
-    if (!confirm('确定清空回收站？')) return;
-    deletedSegments = [];
-    _saveTrash();
-    updateTrashUI();
-    showToast('🗑️ 回收站已清空', 'info');
-  }
-  function updateTrashUI() {
-    const panel = document.getElementById('trashPanel');
-    const badge = document.getElementById('trashBadge');
-    if (!panel) return;
-    const count = deletedSegments.length;
-    if (badge) badge.textContent = count || '';
-    badge?.classList.toggle('visible', count > 0);
-    panel.classList.toggle('has-items', count > 0);
-    panel.style.display = count > 0 ? 'block' : 'none';
-    if (count === 0) {
-      panel.innerHTML = '<div class="trash-hint">回收站空空如也</div>';
-      return;
-    }
-    const list = deletedSegments.slice(0, 10).map((e, i) => {
-      const age = _ageStr(e.deletedAt);
-      return '<div class="trash-item"><span class="trash-arrow">' +
-        escapeHtml(e.fromName) + ' → ' + escapeHtml(e.toName) + '</span>' +
-        '<span class="trash-age">' + age + '</span>' +
-        '<button class="trash-restore-btn" data-ti="' + i + '" title="恢复">↩</button></div>';
-    }).join('');
-    panel.innerHTML = list +
-      '<div class="trash-actions"><button class="trash-undo-btn" id="trashUndoBtn">↩ 撤销删除</button>' +
-      '<button class="trash-empty-btn" id="trashEmptyBtn">清空</button></div>';
-  }
-  function _ageStr(ts) {
-    const m = Math.floor((Date.now() - ts) / 60000);
-    if (m < 1) return '刚刚';
-    if (m < 60) return m + '分钟前';
-    const h = Math.floor(m / 60);
-    if (h < 24) return h + '小时前';
-    return Math.floor(h / 24) + '天前';
-  }
 
   function deleteSegmentAt(idx) {
     if (idx < 0 || idx >= ROUTE_SEGMENTS.length) return;
@@ -6559,11 +6371,9 @@ svg.leaflet-image-layer.leaflet-interactive path {
     const fromName = nodeData[fi]?.name || '?';
     const toName = nodeData[ti]?.name || '?';
     if (!confirm(`删除第 ${idx + 1} 段：\n${fromName} → ${toName}？`)) return;
-    const seg = ROUTE_SEGMENTS[idx];
     ROUTE_SEGMENTS.splice(idx, 1);
-    addToTrash(seg, idx, fi, ti);
     applyRouteUpdate();
-    showToast('🗑️ 已移入回收站（可撤销）', 'success');
+    showToast('🗑️ 路线段已删除', 'success');
   }
   // ====== 交换两个节点在列表中的位置，编号跟随列表顺序变化 ======
   // 用于：节点列表里的上移/下移按钮
