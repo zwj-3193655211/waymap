@@ -5509,6 +5509,7 @@ svg.leaflet-image-layer.leaflet-interactive path {
 
   function openNode(id) {
     activeNodeId = id;
+    hideNodeHoverCard(); // 打开详情面板时收起悬浮卡，避免重叠
     const node = nodeData.find(n => n.id === id);
     if (!node) return;
 
@@ -6783,6 +6784,7 @@ svg.leaflet-image-layer.leaflet-interactive path {
     if (idx < 0 || idx >= nodeData.length) return;
     const node = nodeData[idx];
     if (!confirm(`删除「${node.name}」？\n所有相关路线段也会一并删除。`)) return;
+    hideNodeHoverCard(); // 删除前强制收起悬浮卡，避免 marker 被移除后关不掉
     const segsToRemove = [];
     ROUTE_SEGMENTS.forEach((seg, i) => { if (seg[0] === idx || seg[1] === idx) segsToRemove.push(i); });
     segsToRemove.reverse().forEach(i => ROUTE_SEGMENTS.splice(i, 1));
@@ -6791,8 +6793,18 @@ svg.leaflet-image-layer.leaflet-interactive path {
       if (ROUTE_SEGMENTS[i][1] > idx) ROUTE_SEGMENTS[i][1]--;
     }
     nodeData.splice(idx, 1);
-    if (characterNodeIndex === idx) characterNodeIndex = Math.max(0, idx - 1);
-    else if (characterNodeIndex > idx) characterNodeIndex--;
+
+    if (nodeData.length === 0) {
+      // 全部节点已删除：移除红星、重置索引、退出编辑模式
+      characterNodeIndex = -1;
+      if (characterMarker && map) { map.removeLayer(characterMarker); characterMarker = null; }
+      if (isEditMode) setEditMode(false);
+    } else {
+      if (characterNodeIndex === idx) characterNodeIndex = Math.max(0, idx - 1);
+      else if (characterNodeIndex > idx) characterNodeIndex--;
+      if (characterNodeIndex >= nodeData.length) characterNodeIndex = nodeData.length - 1;
+    }
+
     saveCharacterIndex(characterNodeIndex);
     saveAllData(); rebuildMapOverlays(); renderRouteInfo(); updateCharacterStatus();
     showToast(`🗑️ 已删除「${node.name}」`, 'success');
@@ -6959,6 +6971,7 @@ svg.leaflet-image-layer.leaflet-interactive path {
 
   function rebuildMapOverlays() {
     if (!map) return;
+    hideNodeHoverCard(); // 重建覆盖物前收起悬浮卡，避免旧 marker 移除后关不掉
     markers.forEach(m => map.removeLayer(m));
     markers = [];
     if (Array.isArray(distMarkers)) distMarkers.forEach(dm => map.removeLayer(dm));
@@ -7348,13 +7361,14 @@ svg.leaflet-image-layer.leaflet-interactive path {
         document.getElementById('addMarkerBtn')?.click();
         return;
       }
-      // ---- Escape：关闭 dialog / 面板 / 悬浮卡（其余由既有监听处理）----
+      // ---- Escape：关闭 dialog / 面板 / 悬浮卡 / 编辑模式（其余由既有监听处理）----
       if (e.key === 'Escape') {
         if (typeof keyDialogBackdrop !== 'undefined' &&
             keyDialogBackdrop?.classList.contains('show')) { closeKeyDialog(); return; }
         if (searchPanel?.classList.contains('show')) { closeSearchPanel(); return; }
         const nhc = document.getElementById('nodeHoverCard');
-        if (nhc?.classList.contains('show')) nhc.classList.remove('show');
+        if (nhc?.classList.contains('show')) { nhc.classList.remove('show'); return; }
+        if (isEditMode && !isTypingTarget(e.target)) { setEditMode(false); return; }
         clearKbActive();
         if (isTypingTarget(e.target)) e.target.blur();
         return;
