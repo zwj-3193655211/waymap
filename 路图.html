@@ -4844,7 +4844,7 @@ svg.leaflet-image-layer.leaflet-interactive path {
 
     // 路线主线：青色流动光带
     // 每段独立绘制折线，不相邻段不会连出多余连线
-    // 颜色/样式由全局 makeSegmentStyles(fi, ti) 决定（按 day 着色 + 已完成段实线）
+    // 颜色/样式由全局 makeSegmentStyles(fi, ti) 决定（未完成=焦墨虚线，已完成=朱砂实线）
     const routeCoords = [];
     ROUTE_SEGMENTS.forEach(([fi, ti]) => {
       const segCoords = [[nodeData[fi].lat, nodeData[fi].lng], [nodeData[ti].lat, nodeData[ti].lng]];
@@ -6341,10 +6341,9 @@ svg.leaflet-image-layer.leaflet-interactive path {
       const fn = nodeData[fi], tn = nodeData[ti];
       const segCoords = [[fn.lat, fn.lng], [tn.lat, tn.lng]];
 
-      const gl = L.polyline(segCoords, { color: '#5e4a3a', weight: 6, opacity: 0.12, lineCap: 'round' }).addTo(map);
-      glowLines.push(gl);
-      const rl = L.polyline(segCoords, { color: '#4a3020', weight: 1.2, opacity: 0.65, dashArray: '4 4', lineCap: 'round', lineJoin: 'round', className: 'ink-route' }).addTo(map);
-      routeLines.push(rl);
+      const styles = makeSegmentStyles(fi, ti);
+      glowLines.push(L.polyline(segCoords, styles.gl).addTo(map));
+      routeLines.push(L.polyline(segCoords, styles.rl).addTo(map));
 
       const fromLL = L.latLng(fn.lat, fn.lng);
       const toLL = L.latLng(tn.lat, tn.lng);
@@ -6577,29 +6576,19 @@ svg.leaflet-image-layer.leaflet-interactive path {
   }
   exitEditModeBtn?.addEventListener('click', () => setEditMode(false));
 
-  // ========== 连线样式（按 day 着色 + 已完成段变实线）==========
-  // 连线颜色按两端节点的 day 取最大值，从焦墨渐变到朱砂。
-  // 已完成段（两端都 done-all）优先级最高：朱砂实线 + 加粗。
+  // ========== 连线样式（统一：未完成=焦墨虚线，已完成=朱砂实线）==========
+  // 所有未完成段统一焦墨色 + 虚线。已 done-all 的两端 -> 朱砂实线 + 加粗。
+  // 不再按 day 渐变（会造成同一规划图里颜色不统一）。
   function makeSegmentStyles(fi, ti) {
-    const fromDone = isNodeAllDone(fi);
-    const toDone = isNodeAllDone(ti);
-    if (fromDone && toDone) {
+    if (isNodeAllDone(fi) && isNodeAllDone(ti)) {
       return {
         gl: { color: '#a8324a', weight: 6, opacity: 0.20, lineCap: 'round' },
         rl: { color: '#a8324a', weight: 2.0, opacity: 0.85, lineCap: 'round', lineJoin: 'round', className: 'ink-route route-done' }
       };
     }
-    // 按 day 取最大，HSL 在焦墨(28°) → 朱砂(346°) 间走最短路径（顺时针约 40°）
-    const day = Math.max(Number(nodeData[fi]?.day) || 1, Number(nodeData[ti]?.day) || 1);
-    const t = Math.min(1, (day - 1) / 6); // 6 天行程达到朱砂，后续天数封顶
-    // 走最短弧：焦墨 28° → 0° → 朱砂 346°，即 hue 减小方向
-    const h = (28 - 40 * t + 360) % 360;
-    const s = 33 + (56 - 33) * t;
-    const l = 16 + (43 - 16) * t;
-    const color = 'hsl(' + h.toFixed(0) + ',' + s.toFixed(0) + '%,' + l.toFixed(0) + '%)';
     return {
-      gl: { color, weight: 6, opacity: 0.12, lineCap: 'round' },
-      rl: { color, weight: 1.2, opacity: 0.65, dashArray: '4 4', lineCap: 'round', lineJoin: 'round', className: 'ink-route' }
+      gl: { color: '#5e4a3a', weight: 6, opacity: 0.12, lineCap: 'round' },
+      rl: { color: '#4a3020', weight: 1.2, opacity: 0.65, dashArray: '4 4', lineCap: 'round', lineJoin: 'round', className: 'ink-route' }
     };
   }
 
