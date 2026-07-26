@@ -4261,24 +4261,17 @@ svg.leaflet-image-layer.leaflet-interactive path {
     if (el && t) el.textContent = t.name || '行程';
   }
 
-  // 切换当前行程（重设 nodeData / ROUTE_SEGMENTS / characterNodeIndex 引用，重建地图）
+  // 切换当前行程：保存 currentTripId 后直接刷新整页
+  // 刷新可以彻底重置 characterMarker / 动画 / 事件监听器，避免切换后
+  // 红星、运动、路径动画状态不一致的问题。
   function switchTrip(tripId) {
     const target = trips.find(t => t.id === tripId);
     if (!target || target.id === currentTripId) return;
     currentTripId = target.id;
-    nodeData = target.nodeData;
-    ROUTE_SEGMENTS = target.routeSegments;
-    characterNodeIndex = target.characterIndex;
     saveCurrentTripId();
-    // 重置 UI 与地图覆盖物
-    closePanel();
-    if (characterMarker && map) { map.removeLayer(characterMarker); characterMarker = null; }
-    rebuildMapOverlays();
-    renderRouteInfo();
-    updateProgress();
-    updateCharacterStatus();
-    updateTripSwitcherLabel();
-    showToast(`🧭 已切换到「${target.name}」`, 'success');
+    // 保存 toast 提示文本到 sessionStorage，刷新后取回
+    try { sessionStorage.setItem('trip-switch-toast', target.name || '行程'); } catch (_) {}
+    location.reload();
   }
 
   // 新建行程：从当前复制（包括数据副本），名字追加" · 副本"
@@ -6647,6 +6640,14 @@ svg.leaflet-image-layer.leaflet-interactive path {
   renderRouteInfo();
   updateProgress();
   updateMarkersDoneState();
+  // 刷新后恢复切换提示 toast
+  try {
+    const tn = sessionStorage.getItem('trip-switch-toast');
+    if (tn) {
+      sessionStorage.removeItem('trip-switch-toast');
+      setTimeout(() => showToast('🧭 已切换到「' + tn + '」', 'success'), 400);
+    }
+  } catch (_) {}
   bindMarkerDblClick();
 
     function exportToHTML() {
