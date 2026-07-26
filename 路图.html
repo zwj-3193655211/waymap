@@ -5528,6 +5528,7 @@ svg.leaflet-image-layer.leaflet-interactive path {
         renderTodos(n);
         updateProgress();
         updateMarkersDoneState();
+        syncRouteOverlays(); // 刷新连线颜色：两端 done-all 时变朱砂实线
       });
     });
 
@@ -5554,6 +5555,7 @@ svg.leaflet-image-layer.leaflet-interactive path {
         renderTodos(n);
         updateProgress();
         updateMarkersDoneState();
+        syncRouteOverlays(); // 删除 todo 后节点可能不再 done-all，刷新连线颜色
       });
     });
 
@@ -5774,6 +5776,7 @@ svg.leaflet-image-layer.leaflet-interactive path {
     renderTodos(node);
     updateProgress();
     updateMarkersDoneState();
+    syncRouteOverlays(); // 新增未完成 todo 不会使节点变 done-all，但为了状态一致也刷新
   }
 
   todoAddBtn.addEventListener('click', addTodo);
