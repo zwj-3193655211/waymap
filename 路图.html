@@ -6612,6 +6612,16 @@ svg.leaflet-image-layer.leaflet-interactive path {
       if (characterNodeIndex === idx) characterNodeIndex = Math.max(0, idx - 1);
       else if (characterNodeIndex > idx) characterNodeIndex--;
       if (characterNodeIndex >= nodeData.length) characterNodeIndex = nodeData.length - 1;
+      // 删除后节点位置已变：把独立红星 marker 重新定位到新的 characterNodeIndex，否则红星会残留在已删除节点的旧坐标
+      if (characterMarker && map && characterNodeIndex >= 0) {
+        const cn = nodeData[characterNodeIndex];
+        if (cn) {
+          characterMarker.setLatLng([cn.lat, cn.lng]);
+          const cel = characterMarker.getElement();
+          const cwrap = cel ? cel.querySelector('.character-wrap') : null;
+          if (cwrap) cwrap.style.setProperty('--cc', hexToRgbStr(cn.color));
+        }
+      }
     }
 
     saveCharacterIndex(characterNodeIndex);
