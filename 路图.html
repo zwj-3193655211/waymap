@@ -1457,7 +1457,7 @@ svg.leaflet-image-layer.leaflet-interactive path {
     flex-shrink: 0;
   }
 
-  .character-div-icon { background: none !important; border: none !important; }
+  .character-div-icon { background: none !important; border: none !important; pointer-events: none !important; }
 
   /* ===================== 站点标记 ===================== */
   .custom-div-icon { background: none !important; border: none !important; }
@@ -3795,7 +3795,7 @@ svg.leaflet-image-layer.leaflet-interactive path {
     <div class="dist-toggle-wrapper" id="distToggleWrapper">
       <span class="dist-toggle-label">距离牌</span>
       <label class="dist-toggle-switch">
-        <input type="checkbox" id="distToggleCheckbox" checked>
+        <input type="checkbox" id="distToggleCheckbox">
         <span class="dist-toggle-slider"></span>
       </label>
     </div>
@@ -5002,8 +5002,13 @@ svg.leaflet-image-layer.leaflet-interactive path {
     const checkbox = document.getElementById('distToggleCheckbox');
     if (!checkbox) return;
 
+    // 读取上次记忆的状态：默认关闭（避免刷新后距离牌自动打开）
+    const saved = localStorage.getItem('waymap.distLabels');
+    if (saved !== null) checkbox.checked = (saved === '1');
+
     function applyToggle() {
       const visible = checkbox.checked;
+      try { localStorage.setItem('waymap.distLabels', visible ? '1' : '0'); } catch (e) {}
       if (Array.isArray(distMarkers)) {
         distMarkers.forEach(dm => {
           const el = dm.getElement();
