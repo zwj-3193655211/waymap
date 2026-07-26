@@ -1077,10 +1077,6 @@ svg.leaflet-image-layer.leaflet-interactive path {
     display: flex; align-items: center; gap: 8px;
     margin-bottom: 8px;
   }
-  .node-hover-card .nhc-icon {
-    font-size: 18px; flex-shrink: 0;
-    line-height: 1;
-  }
   .node-hover-card .nhc-info { flex: 1; min-width: 0; }
   .node-hover-card .nhc-name {
     font-family: var(--font-serif);
@@ -1494,23 +1490,6 @@ svg.leaflet-image-layer.leaflet-interactive path {
     z-index: 2;
     transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
   }
-  /* 有自定义图标时：图标在上，编号在下 */
-  .station-marker.has-icon .sm-core {
-    flex-direction: column;
-    gap: 0px;
-    line-height: 1;
-  }
-  .station-marker .sm-icon {
-    font-size: 14px;
-    line-height: 1;
-    margin-bottom: 0px;
-  }
-  .station-marker .sm-label-sub {
-    font-size: 7.5px;
-    font-weight: 600;
-    opacity: 0.7;
-    line-height: 1;
-  }
   /* 节点圆内标签：禁止换行、随字数自动缩放字号、完整显示 */
   .station-marker .sm-label {
     display: block;
@@ -1519,9 +1498,6 @@ svg.leaflet-image-layer.leaflet-interactive path {
     line-height: 1;
     text-align: center;
     letter-spacing: 0;
-  }
-  .station-marker.has-icon .sm-label {
-    max-width: 100%;
   }
   /* 内圈装饰：淡色水纹 */
   .sm-core::before {
@@ -5333,17 +5309,11 @@ svg.leaflet-image-layer.leaflet-interactive path {
     if (len === 5) return 6;
     return 5; // 6 字（input maxlength 上限）
   }
-  // 更新 marker 圆心文字：保持图标（如有）、重算字号、禁止换行
-  function updateMarkerLabelCore(core, text, node) {
+  // 更新 marker 圆心文字：重算字号、禁止换行
+  function updateMarkerLabelCore(core, text) {
     if (!core) return;
     const size = getMarkerLabelFontSize(text);
-    const icon = node && node.icon && node.icon.trim();
-    if (icon) {
-      core.innerHTML = '<span class="sm-icon">' + escapeHtml(icon) +
-        '</span><span class="sm-label sm-label-sub" style="font-size:' + size + 'px">' + escapeHtml(text) + '</span>';
-    } else {
-      core.innerHTML = '<span class="sm-label" style="font-size:' + size + 'px">' + escapeHtml(text) + '</span>';
-    }
+    core.innerHTML = '<span class="sm-label" style="font-size:' + size + 'px">' + escapeHtml(text) + '</span>';
   }
 
   function createMarker(node, index) {
@@ -5356,18 +5326,13 @@ svg.leaflet-image-layer.leaflet-interactive path {
     } else {
       labelText = String(index + 1).padStart(2, '0');
     }
-    // 自定义图标（emoji），与编号二选一
-    const hasIcon = node.icon && node.icon.trim();
     const labelSize = getMarkerLabelFontSize(labelText);
-    const coreInner = hasIcon
-      ? `<span class="sm-icon">${escapeHtml(node.icon.trim())}</span><span class="sm-label sm-label-sub" style="font-size:${labelSize}px">${escapeHtml(labelText)}</span>`
-      : `<span class="sm-label" style="font-size:${labelSize}px">${escapeHtml(labelText)}</span>`;
     const html = `
-      <div class="station-marker${hasIcon ? ' has-icon' : ''}" data-node-idx="${index}">
+      <div class="station-marker" data-node-idx="${index}">
         <div class="sm-spin"></div>
         <div class="sm-spin inner"></div>
         <div class="sm-core">
-          ${coreInner}
+          <span class="sm-label" style="font-size:${labelSize}px">${escapeHtml(labelText)}</span>
         </div>
         <div class="sm-ring"></div>
         <div class="sm-del" title="编辑模式：删除此站点">✕</div>
@@ -5375,7 +5340,7 @@ svg.leaflet-image-layer.leaflet-interactive path {
     `;
     const icon = L.divIcon({
       html: html,
-      className: 'custom-div-icon' + (hasIcon ? ' custom-div-icon-with-icon' : ''),
+      className: 'custom-div-icon',
       iconSize: [44, 44],
       iconAnchor: [22, 22],
     });
@@ -5404,7 +5369,6 @@ svg.leaflet-image-layer.leaflet-interactive path {
     // 拼接内容
     let html = '';
     html += '<div class="nhc-head">';
-    if (node.icon) html += '<span class="nhc-icon">' + escapeHtml(node.icon) + '</span>';
     html += '<div class="nhc-info">';
     html += '<div class="nhc-name">' + escapeHtml(node.name || '未命名') + '</div>';
     if (node.subtitle) html += '<div class="nhc-subtitle">' + escapeHtml(node.subtitle) + '</div>';
@@ -5601,7 +5565,7 @@ svg.leaflet-image-layer.leaflet-interactive path {
           if (nodeBadge) nodeBadge.textContent = getNodeBadgeDisplayText(nodeData[idx], idx);
           const m = markers[idx];
           const core = m?.getElement()?.querySelector('.station-marker .sm-core');
-          updateMarkerLabelCore(core, String(num), nodeData[idx]);
+          updateMarkerLabelCore(core, String(num));
           saveData();
         }
       };
@@ -6134,7 +6098,7 @@ svg.leaflet-image-layer.leaflet-interactive path {
       panelLabelInput.classList.remove('invalid');
       const marker = markers[idx];
       const core = marker?.getElement()?.querySelector('.station-marker .sm-core');
-      updateMarkerLabelCore(core, defaultLabel, nodeData[idx]);
+      updateMarkerLabelCore(core, defaultLabel);
       if (nodeBadge) nodeBadge.textContent = getNodeBadgeDisplayText(nodeData[idx], idx);
       saveData();
       renderRouteInfo();
@@ -6158,7 +6122,7 @@ svg.leaflet-image-layer.leaflet-interactive path {
     nodeData[idx].label = v;
     const marker = markers[idx];
     const core = marker?.getElement()?.querySelector('.station-marker .sm-core');
-    updateMarkerLabelCore(core, v, nodeData[idx]);
+    updateMarkerLabelCore(core, v);
     if (nodeBadge) nodeBadge.textContent = v;
     saveData();
     renderRouteInfo();
