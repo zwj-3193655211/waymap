@@ -7,6 +7,7 @@ Drop waypoints on the map, draw polylines between them, mark each stop as done /
 ## Features
 
 - Add / edit waypoints on the map
+- Reorder stops in the node list; stop numbers are automatically derived from list order
 - Draw multi-segment routes by connecting stops
 - Mark each stop as todo / done with progress tracking
 - Search places, switch between Paper (AMap) / Satellite basemaps

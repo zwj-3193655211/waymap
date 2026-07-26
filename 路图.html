@@ -1940,70 +1940,18 @@ svg.leaflet-image-layer.leaflet-interactive path {
     letter-spacing: 0.04em;
     border: 1px solid currentColor;
     background: rgba(255,255,255,0.04);
-    cursor: pointer;
-    transition: all 0.15s;
     user-select: none;
   }
   .panel-header .node-badge:hover {
     background: rgba(255,255,255,0.08);
-    transform: translateY(-1px);
-  }
-  .panel-header .node-badge::after {
-    content: "✎";
-    opacity: 0.4;
-    font-size: 9px;
-    margin-left: 2px;
-  }
-  .panel-header .node-badge.editing {
-    padding: 0; gap: 0; border-color: var(--seal);
-    background: rgba(168,50,74,0.04);
-  }
-  .panel-header .node-badge.editing::after { display: none; }
-  .panel-header .node-badge .nb-input {
-    width: 30px; padding: 3px 2px;
-    background: transparent; border: 0; outline: none;
-    font-family: var(--font-mono); font-size: 9px; font-weight: 700;
-    letter-spacing: 0.04em; color: currentColor;
-    text-align: center;
-  }
-  .panel-header .node-badge .nb-btn {
-    width: 22px; height: 22px;
-    display: inline-flex; align-items: center; justify-content: center;
-    font-size: 11px; font-weight: 700;
-    border: 0; cursor: pointer; padding: 0;
-    transition: all 0.15s;
-  }
-  .panel-header .node-badge .nb-btn.ok {
-    background: var(--ink-green);
-    color: white;
-    border-radius: 0 5px 5px 0;
-  }
-  .panel-header .node-badge .nb-btn.ok:hover { background: #2c4a30; }
-  .panel-header .node-badge .nb-btn.cancel {
-    background: var(--seal);
-    color: white;
-  }
-  .panel-header .node-badge .nb-btn.cancel:hover { background: #7a1f33; }
-  .panel-header .node-badge .nb-prefix {
-    padding: 3px 4px 3px 8px;
-    font-family: var(--font-mono); font-size: 8px; font-weight: 500;
-    color: currentColor; letter-spacing: 0.04em;
-  }
-  .panel-header .node-badge.invalid-shake {
-    animation: nbShake 0.32s ease-out;
-  }
-  @keyframes nbShake {
-    0%,100% { transform: translateX(0); }
-    25%     { transform: translateX(-4px); border-color: #c0392b; }
-    75%     { transform: translateX(4px);  border-color: #c0392b; }
-  }
-  .station-marker.conflict-flash {
-    animation: conflictFlash 0.9s ease-out;
   }
   @keyframes conflictFlash {
     0%,100% { transform: scale(1); }
     30%     { transform: scale(1.4); box-shadow: 0 0 0 6px rgba(192,57,43,0.5); }
     60%     { transform: scale(1.2); box-shadow: 0 0 0 10px rgba(192,57,43,0.25); }
+  }
+  .station-marker.conflict-flash {
+    animation: conflictFlash 0.9s ease-out;
   }
   .panel-header h2 {
     font-family: var(--font-serif);
@@ -2720,8 +2668,12 @@ svg.leaflet-image-layer.leaflet-interactive path {
   .route-info .route-item .route-date {
     font-size: 8px;
     color: var(--ink);
-    margin-left: auto;
     flex-shrink: 0;
+  }
+  .route-info .route-item .route-actions {
+    display: flex; gap: 2px;
+    margin-left: auto; flex-shrink: 0;
+    opacity: 1; transition: opacity 0.2s;
   }
   .route-info .route-item .node-name {
     flex: 1; min-width: 0;
@@ -3244,7 +3196,7 @@ svg.leaflet-image-layer.leaflet-interactive path {
   .route-info .route-item .route-actions {
     display: flex; gap: 2px;
     margin-left: auto; flex-shrink: 0;
-    opacity: 0.45; transition: opacity 0.2s;
+    opacity: 1; transition: opacity 0.2s;
   }
   .route-info .route-item:hover .route-actions { opacity: 1; }
   .route-act-btn {
@@ -3878,7 +3830,7 @@ svg.leaflet-image-layer.leaflet-interactive path {
     <!-- Todo Side Panel -->
     <aside class="todo-panel" id="todoPanel">
       <div class="panel-header">
-        <span class="node-badge" id="nodeBadge" title="点击修改站点编号">站点 · 01</span>
+        <span class="node-badge" id="nodeBadge">站点 · 01</span>
         <h2 id="panelTitle">站点名称</h2>
         <div class="panel-label-row">
           <label class="panel-label-lbl">标签</label>
@@ -5317,12 +5269,10 @@ svg.leaflet-image-layer.leaflet-interactive path {
   }
 
   function createMarker(node, index) {
-    // 优先级：用户标签 > 用户站点编号 > 默认 idx+1
+    // 编号由节点列表顺序决定：label > 默认序号
     let labelText;
     if (node.label && node.label.trim()) {
       labelText = node.label.trim();
-    } else if (node.stationNo != null) {
-      labelText = String(node.stationNo);
     } else {
       labelText = String(index + 1).padStart(2, '0');
     }
@@ -5442,14 +5392,17 @@ svg.leaflet-image-layer.leaflet-interactive path {
       const item = document.createElement('div');
       item.className = 'route-item' + (i === characterNodeIndex ? ' current' : '');
       item.dataset.index = i;
-      const meta = (node.label && node.label.trim())
-        || (node.stationNo != null ? ('站点·' + node.stationNo) : '');
+      const meta = (node.label && node.label.trim()) || '';
       item.innerHTML =
         '<span class="num">' + String(i + 1).padStart(2, '0') + '</span>' +
         '<span class="route-dot" style="background:' + node.color + '; color:' + node.color + '"></span>' +
         '<span class="node-name">' + escapeHtml(node.name) + '</span>' +
         (i === characterNodeIndex ? '<span class="node-star" title="红星所在">★</span>' : '') +
-        '<span class="route-date">' + escapeHtml(meta) + '</span>';
+        '<span class="route-date">' + escapeHtml(meta) + '</span>' +
+        '<span class="route-actions">' +
+          '<button class="route-act-btn act-up" title="上移" data-move="up" data-idx="' + i + '" ' + (i === 0 ? 'disabled' : '') + '>▲</button>' +
+          '<button class="route-act-btn act-down" title="下移" data-move="down" data-idx="' + i + '" ' + (i === nodeData.length - 1 ? 'disabled' : '') + '>▼</button>' +
+        '</span>';
       list.appendChild(item);
     });
   }
@@ -5467,7 +5420,6 @@ svg.leaflet-image-layer.leaflet-interactive path {
   function getNodeBadgeDisplayText(node, idx) {
     const label = node.label && node.label.trim();
     if (label) return label;
-    if (node.stationNo != null) return `站点 · ${node.stationNo}`;
     return `站点 · ${String(idx + 1).padStart(2, '0')}`;
   }
 
@@ -5500,130 +5452,8 @@ svg.leaflet-image-layer.leaflet-interactive path {
     // 填充连线管理
     populateConnections(idx);
 
-    // 站点编号点击编辑：徽章变输入框 + ✓/✕ 按钮，必须点按钮才提交
-    nodeBadge.onclick = (e) => {
-      e.stopPropagation();
-      // 已经在编辑态时，徽章整体点击不再进入新一轮
-      if (nodeBadge.classList.contains('editing')) return;
-      const idx = nodeData.findIndex(n => n.id === activeNodeId);
-      if (idx < 0) return;
-      const oldText = nodeData[idx].stationNo != null ? String(nodeData[idx].stationNo) : String(idx + 1).padStart(2, '0');
-      nodeBadge.classList.add('editing');
-      nodeBadge.innerHTML =
-        '<span class="nb-prefix">站点 ·</span>' +
-        '<input class="nb-input" type="text" inputmode="numeric" maxlength="2" />' +
-        '<button class="nb-btn ok"     title="确认">✓</button>' +
-        '<button class="nb-btn cancel" title="取消">✕</button>';
-      const inp = nodeBadge.querySelector('.nb-input');
-      const okBtn = nodeBadge.querySelector('.nb-btn.ok');
-      const cancelBtn = nodeBadge.querySelector('.nb-btn.cancel');
-      inp.value = oldText;
-      inp.focus();
-      inp.select();
-
-      let done = false;
-      const finish = (commit) => {
-        if (done) return;
-        done = true;
-        nodeBadge.classList.remove('editing');
-        if (!commit) {
-          // 取消
-          const idx = nodeData.findIndex(n => n.id === activeNodeId);
-          nodeBadge.textContent = idx >= 0 ? getNodeBadgeDisplayText(nodeData[idx], idx) : `站点 · ${oldText}`;
-          return;
-        }
-        // ===== 提交校验 =====
-        const raw = inp.value.trim();
-        if (!/^\d+$/.test(raw)) {
-          showNbError('只能是数字');
-          return;
-        }
-        const num = parseInt(raw, 10);
-        if (num < 0 || num > 99) {
-          showNbError('范围 0-99');
-          return;
-        }
-        if (num < nodeData.length) {
-          // 在数组范围内：把当前节点移动到 num-1 位置
-          // 同时清掉自己/目标的 stationNo，移动后按 idx 走默认编号
-          const targetIdx = num - 1;
-          delete nodeData[idx].stationNo;
-          delete nodeData[targetIdx].stationNo;
-          if (targetIdx === idx) {
-            // 目标就是当前位置：只清掉自定义编号，立即刷新徽章
-            saveData();
-            openNode(nodeData[idx].id);
-          } else {
-            swapNodesByIndex(idx, targetIdx);
-          }
-        } else {
-          // 超出数组范围：把"显示的编号"存到 stationNo 字段
-          // - 数组位置不动
-          // - ROUTE_SEGMENTS 不动
-          // - 徽章 / marker 圆圈直接显示 num
-          nodeData[idx].stationNo = num;
-          if (nodeBadge) nodeBadge.textContent = getNodeBadgeDisplayText(nodeData[idx], idx);
-          const m = markers[idx];
-          const core = m?.getElement()?.querySelector('.station-marker .sm-core');
-          updateMarkerLabelCore(core, String(num));
-          saveData();
-        }
-      };
-
-      // 错误提示：抖动 + 临时把"站点·"换成红色错误文案
-      function showNbError(msg, focusIdx) {
-        nodeBadge.classList.add('invalid-shake');
-        setTimeout(() => nodeBadge.classList.remove('invalid-shake'), 350);
-        // 不动 nodeData；只是把徽章临时换成错误提示，0.9s 后回弹
-        const oldBg = nodeBadge.style.background;
-        nodeBadge.style.background = 'rgba(192,57,43,0.12)';
-        nodeBadge.textContent = `✕ ${msg}`;
-        setTimeout(() => {
-          // 还原为编辑态（恢复原值 + ✓/✕ 按钮）
-          if (nodeBadge.classList.contains('editing')) {
-            // 用户可能还点着什么，避免误重画
-            return;
-          }
-          const idx = nodeData.findIndex(n => n.id === activeNodeId);
-          nodeBadge.style.background = oldBg;
-          nodeBadge.textContent = idx >= 0 ? getNodeBadgeDisplayText(nodeData[idx], idx) : `站点 · ${oldText}`;
-        }, 900);
-        if (focusIdx != null) {
-          // 顺手把被占用的那个 marker 闪一下，方便用户看冲突
-          const m = markers[focusIdx];
-          if (m) {
-            const root = m.getElement()?.querySelector('.station-marker');
-            if (root) {
-              root.classList.add('conflict-flash');
-              setTimeout(() => root.classList.remove('conflict-flash'), 900);
-            }
-          }
-        }
-      }
-
-      okBtn.addEventListener('click', (ev) => { ev.stopPropagation(); finish(true); });
-      cancelBtn.addEventListener('click', (ev) => { ev.stopPropagation(); finish(false); });
-      // 阻止徽章上点击冒泡到 panel 关闭
-      [inp, okBtn, cancelBtn].forEach(el => el.addEventListener('click', e => e.stopPropagation()));
-
-      // 边输边去前导 0：用户输 "01" → 变成 "1"
-      inp.addEventListener('input', () => {
-        const v = inp.value;
-        if (v && v.length > 1 && v.startsWith('0')) {
-          const trimmed = v.replace(/^0+/, '') || '0';
-          const pos = inp.selectionStart - (v.length - trimmed.length);
-          inp.value = trimmed;
-          inp.setSelectionRange(pos, pos);
-        }
-      });
-
-      inp.addEventListener('keydown', (ev) => {
-        if (ev.key === 'Enter')  { ev.preventDefault(); finish(true); }
-        if (ev.key === 'Escape') { ev.preventDefault(); finish(false); }
-        // 限制只输数字
-        if (ev.key.length === 1 && !/\d/.test(ev.key)) ev.preventDefault();
-      });
-    };
+    // 站点编号由节点列表排序决定，不再支持手动输入编辑
+    nodeBadge.onclick = null;
 
     markers.forEach((m, i) => {
       const root = m.getElement()?.querySelector('.station-marker');
@@ -6297,8 +6127,20 @@ svg.leaflet-image-layer.leaflet-interactive path {
     if (e.target.id === 'trashEmptyBtn') emptyTrash();
   });
 
-  // ====== 节点列表事件（点击任意节点 → 红星移动到该点）======
+  // ====== 节点列表事件（点击任意节点 → 红星移动到该点；点击上下按钮 → 调整排序）======
     document.getElementById('routeList').addEventListener('click', async (e) => {
+      const moveBtn = e.target.closest('.route-act-btn');
+      if (moveBtn) {
+        e.stopPropagation();
+        const idx = Number(moveBtn.dataset.idx);
+        const dir = moveBtn.dataset.move;
+        if (dir === 'up' && idx > 0) {
+          swapNodesByIndex(idx, idx - 1);
+        } else if (dir === 'down' && idx < nodeData.length - 1) {
+          swapNodesByIndex(idx, idx + 1);
+        }
+        return;
+      }
       const item = e.target.closest('.route-item');
       if (!item) return;
       const idx = Number(item.dataset.index);
@@ -6717,8 +6559,8 @@ svg.leaflet-image-layer.leaflet-interactive path {
     applyRouteUpdate();
     showToast('🗑️ 已移入回收站（可撤销）', 'success');
   }
-  // ====== 通过站点编号（默认 idx+1）交换两个节点的位置 ======
-  // 用于：点击"站点 · 07"徽章改成 04 → 把当前站点挪到 04 的位置，原 04 站点挪过来
+  // ====== 交换两个节点在列表中的位置，编号跟随列表顺序变化 ======
+  // 用于：节点列表里的上移/下移按钮
   // - nodeData 整体对调 a 和 b
   // - 同步修正 ROUTE_SEGMENTS 中所有引用 idx 的数字
   // - 同步修正 characterNodeIndex（如果它指向 a 或 b）
@@ -6739,6 +6581,8 @@ svg.leaflet-image-layer.leaflet-interactive path {
     saveRouteSegments();
     saveCharacterIndex();
     rebuildMapOverlays();
+    renderRouteInfo();
+    updateCharacterStatus();
     // 重新打开当前站点（位置已变）
     const id = nodeData[b].id;
     openNode(id);
