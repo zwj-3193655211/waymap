@@ -5300,7 +5300,7 @@ svg.leaflet-image-layer.leaflet-interactive path {
       iconSize: [44, 44],
       iconAnchor: [22, 22],
     });
-    const marker = L.marker([node.lat, node.lng], { icon: icon });
+    const marker = L.marker([node.lat, node.lng], { icon: icon, zIndexOffset: 800 }); // 800 > character 的 700，确保 station 始终可点击
     marker.on('click', () => {
       map.flyTo([node.lat, node.lng], Math.max(map.getZoom(), 10), { duration: 0.6 });
       setTimeout(() => openNode(node.id), 400);
