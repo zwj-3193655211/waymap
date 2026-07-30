@@ -7092,8 +7092,16 @@ svg.leaflet-image-layer.leaflet-interactive path {
       showToast('当前浏览器不支持选择文件夹', 'warn', 2500);
       return;
     }
-    const ok = await connectJournalFolder(true);
-    if (!ok) return;
+    let h;
+    try {
+      h = await window.showDirectoryPicker({ mode: 'readwrite', id: 'journal-folder' });
+    } catch (err) {
+      if (err && err.name !== 'AbortError') showToast('未连接「日志」文件夹：将用导入 / 导出方式处理', 'warn', 3200);
+      return;
+    }
+    journalDirHandle = h; journalFsMode = true;
+    await _idbSet(JIDB_KEY, h).catch(() => {});
+    updateFolderBtn();
     const node = getJournalNode();
     if (node) {
       const base = journalFileBase(node);
