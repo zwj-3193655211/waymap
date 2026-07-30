@@ -3234,37 +3234,6 @@ svg.leaflet-image-layer.leaflet-interactive path {
     color: var(--text-1); font-size: 13px; cursor: pointer;
   }
   .jh-path-menu button:hover { background: var(--seal-bg); color: var(--seal); }
-  .journal-folder-view {
-    position: fixed; inset: 0; z-index: 2650;
-    display: none; align-items: center; justify-content: center;
-    background: rgba(0,0,0,0.45); backdrop-filter: blur(4px);
-  }
-  .journal-folder-view.show { display: flex; }
-  .jfv-panel {
-    background: var(--bg-paper); border: 1px solid var(--line-strong);
-    border-radius: 12px; width: 440px; max-width: 92vw; max-height: 74vh;
-    display: flex; flex-direction: column; overflow: hidden;
-    box-shadow: 0 16px 50px rgba(0,0,0,0.45);
-  }
-  .jfv-head {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 14px 18px; border-bottom: 1px solid var(--line);
-    font-family: var(--font-serif); font-size: 16px; color: var(--text-0);
-  }
-  .jfv-close {
-    border: 1px solid var(--line); background: transparent; color: var(--text-2);
-    width: 28px; height: 28px; border-radius: 6px; cursor: pointer; font-size: 14px;
-  }
-  .jfv-close:hover { color: var(--seal); border-color: var(--seal); background: var(--seal-bg); }
-  .jfv-body { padding: 10px 18px 16px; overflow: auto; }
-  .jfv-list { list-style: none; margin: 0; padding: 0; }
-  .jfv-list li {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 7px 0; border-bottom: 1px solid var(--line);
-    color: var(--text-1); font-size: 13px;
-  }
-  .jfv-list li:last-child { border-bottom: none; }
-  .jfv-empty { color: var(--text-3); font-size: 13px; text-align: center; padding: 28px 0; }
   .journal-close {
     border: 1px solid var(--line); background: transparent;
     color: var(--text-2); width: 30px; height: 30px;
@@ -7142,23 +7111,14 @@ svg.leaflet-image-layer.leaflet-interactive path {
     const menu = document.createElement('div');
     menu.id = 'jhPathMenu';
     menu.className = 'jh-path-menu';
-    menu.innerHTML = '<button data-action="view">查看日志文件夹</button><button data-action="switch">切换日志文件夹</button>';
+    menu.innerHTML = '<button data-action="switch">选择日志文件夹</button>';
     menu.addEventListener('click', (e) => {
       const btn = e.target.closest('button');
       if (!btn) return;
       hideJournalFolderMenu();
-      const action = btn.dataset.action;
-      if (action === 'view') openJournalFolderView();
-      else if (action === 'switch') switchJournalFolder();
+      switchJournalFolder();
     });
     document.body.appendChild(menu);
-    const view = document.createElement('div');
-    view.id = 'journalFolderView';
-    view.className = 'journal-folder-view';
-    view.innerHTML = '<div class="jfv-panel"><div class="jfv-head"><span>日志文件夹</span><button class="jfv-close" data-action="close">✕</button></div><div class="jfv-body" id="jfvBody"></div></div>';
-    view.addEventListener('click', (e) => { if (e.target === view) closeJournalFolderView(); });
-    view.querySelector('.jfv-close').addEventListener('click', closeJournalFolderView);
-    document.body.appendChild(view);
   }
   function showJournalFolderMenu(x, y) {
     createJournalFolderUi();
@@ -7172,44 +7132,6 @@ svg.leaflet-image-layer.leaflet-interactive path {
     const menu = document.getElementById('jhPathMenu');
     if (menu) menu.classList.remove('show');
   }
-  async function openJournalFolderView() {
-    createJournalFolderUi();
-    const view = document.getElementById('journalFolderView');
-    const body = document.getElementById('jfvBody');
-    view.classList.add('show');
-    if (!journalDirHandle) {
-      body.innerHTML = '<div class="jfv-empty">未连接日志文件夹</div>';
-      return;
-    }
-    try {
-      const entries = [];
-      for await (const [name, handle] of journalDirHandle.entries()) {
-        entries.push({ name, kind: handle.kind });
-      }
-      entries.sort((a, b) => a.name.localeCompare(b.name, 'zh-CN'));
-      if (entries.length === 0) {
-        body.innerHTML = '<div class="jfv-empty">文件夹为空</div>';
-        return;
-      }
-      const list = document.createElement('ul');
-      list.className = 'jfv-list';
-      for (const e of entries) {
-        const icon = e.kind === 'directory' ? '📁' : '📄';
-        const li = document.createElement('li');
-        li.innerHTML = '<span>' + icon + ' ' + escapeHtml(e.name) + '</span>';
-        list.appendChild(li);
-      }
-      body.innerHTML = '';
-      body.appendChild(list);
-    } catch (err) {
-      body.innerHTML = '<div class="jfv-empty">读取失败：' + escapeHtml(err.message || '未知错误') + '</div>';
-    }
-  }
-  function closeJournalFolderView() {
-    const view = document.getElementById('journalFolderView');
-    if (view) view.classList.remove('show');
-  }
-
   // ---------- 文件读写 ----------
   async function readNodeMd(base) {
     if (!journalDirHandle) return null;
@@ -8253,8 +8175,6 @@ svg.leaflet-image-layer.leaflet-interactive path {
       const mod = e.ctrlKey || e.metaKey;
       const key = (e.key || '').toLowerCase();
       if (e.key === 'Escape') {
-        const folderView = document.getElementById('journalFolderView');
-        if (folderView?.classList.contains('show')) { closeJournalFolderView(); return; }
         const pathMenu = document.getElementById('jhPathMenu');
         if (pathMenu?.classList.contains('show')) { hideJournalFolderMenu(); return; }
       }
