@@ -7113,6 +7113,33 @@ svg.leaflet-image-layer.leaflet-interactive path {
     }
     showToast('已切换日志文件夹', 'success', 2200);
   }
+  async function openCurrentJournalFolder() {
+    if (!('showDirectoryPicker' in window)) {
+      showToast('当前浏览器不支持选择文件夹', 'warn', 2500);
+      return;
+    }
+    if (!journalDirHandle) { switchJournalFolder(); return; }
+    let h;
+    try {
+      h = await window.showDirectoryPicker({ mode: 'readwrite', id: 'journal-folder', startIn: journalDirHandle });
+    } catch (err) {
+      if (err && err.name !== 'AbortError') showToast('打开日志文件夹失败', 'warn', 2500);
+      return;
+    }
+    journalDirHandle = h; journalFsMode = true;
+    await _idbSet(JIDB_KEY, h).catch(() => {});
+    updateFolderBtn();
+    const node = getJournalNode();
+    if (node) {
+      const base = journalFileBase(node);
+      const raw = await readNodeMd(base);
+      journalModel = parseMd(raw || '');
+      journalEntryIdx = -1;
+      renderJournalList();
+      renderEditorForNode();
+    }
+    showToast('已打开日志文件夹', 'success', 1800);
+  }
 
   function createJournalFolderUi() {
     if (document.getElementById('jhPathMenu')) return;
@@ -7672,7 +7699,7 @@ svg.leaflet-image-layer.leaflet-interactive path {
   // ---------- 事件绑定 ----------
   journalCloseBtn && journalCloseBtn.addEventListener('click', closeJournal);
   journalMaximizeBtn && journalMaximizeBtn.addEventListener('click', (e) => { e.stopPropagation(); toggleJournalMaximize(); });
-  journalPathEl && journalPathEl.addEventListener('click', (e) => { e.stopPropagation(); switchJournalFolder(); });
+  journalPathEl && journalPathEl.addEventListener('click', (e) => { e.stopPropagation(); openCurrentJournalFolder(); });
   journalPathEl && journalPathEl.addEventListener('contextmenu', (e) => { e.preventDefault(); e.stopPropagation(); showJournalFolderMenu(e.clientX, e.clientY); });
   jhWinBtns && jhWinBtns.addEventListener('click', (e) => {
     const btn = e.target.closest('.jh-winbtn');
