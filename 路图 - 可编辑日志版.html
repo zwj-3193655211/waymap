@@ -3144,6 +3144,7 @@ svg.leaflet-image-layer.leaflet-interactive path {
   }
 
   /* ===================== 站点日志（全屏覆盖层） ===================== */
+  /* ===================== 站点日志（Markdown 文件版） ===================== */
   .journal-overlay {
     position: fixed; inset: 0; z-index: 2600;
     display: none;
@@ -3153,7 +3154,7 @@ svg.leaflet-image-layer.leaflet-interactive path {
   }
   .journal-overlay.show { display: flex; align-items: center; justify-content: center; padding: 26px; }
   .journal-shell {
-    width: min(1080px, 100%); height: min(740px, 100%);
+    width: min(1100px, 100%); height: min(760px, 100%);
     background: var(--bg-paper);
     border: 1px solid var(--line-strong);
     border-radius: 16px;
@@ -3182,6 +3183,14 @@ svg.leaflet-image-layer.leaflet-interactive path {
     overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
   }
   .journal-head .jh-sub { font-size: 11px; color: var(--text-3); font-family: var(--font-mono); white-space: nowrap; }
+  .jh-folder {
+    border: 1px solid var(--line); background: transparent;
+    color: var(--text-2); font-family: var(--font-mono); font-size: 11px;
+    padding: 5px 10px; border-radius: 999px; cursor: pointer; white-space: nowrap;
+    flex-shrink: 0; transition: all .15s;
+  }
+  .jh-folder:hover { color: var(--seal); border-color: var(--seal); background: var(--seal-bg); }
+  .jh-folder.connected { color: var(--ink-green); border-color: var(--ink-green); }
   .journal-close {
     border: 1px solid var(--line); background: transparent;
     color: var(--text-2); width: 30px; height: 30px;
@@ -3223,11 +3232,6 @@ svg.leaflet-image-layer.leaflet-interactive path {
   .je-item .je-excerpt {
     font-size: 11px; color: var(--text-3); margin-top: 2px;
     overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-  }
-  .je-item .je-thumb {
-    margin-top: 6px; width: 100%; height: 52px;
-    border-radius: 6px; object-fit: cover; display: block;
-    border: 1px solid var(--line);
   }
   .journal-list-empty { padding: 26px 14px; text-align: center; color: var(--text-3); font-size: 12px; line-height: 1.9; }
 
@@ -3286,38 +3290,72 @@ svg.leaflet-image-layer.leaflet-interactive path {
   .je-tool.img:hover { background: var(--seal-bg); }
   .je-tool-sep { width: 1px; height: 20px; background: var(--line); margin: 4px 4px; }
 
-  .je-content {
-    flex: 1; overflow-y: auto;
-    padding: 16px 22px 30px;
-    outline: none;
-    font-size: 14px; line-height: 1.85;
-    color: var(--text-0);
+  /* 编辑区：左 Markdown 源码，右实时预览 */
+  .je-split { flex: 1; display: flex; min-height: 0; }
+  .je-md {
+    flex: 1; min-width: 0; resize: none; outline: none;
+    border: none; border-right: 1px solid var(--line);
+    padding: 16px 18px; background: transparent;
+    color: var(--text-0); font-family: var(--font-mono);
+    font-size: 13.5px; line-height: 1.8;
+    tab-size: 2;
   }
-  .je-content:empty::before { content: attr(data-placeholder); color: var(--text-3); pointer-events: none; }
-  .je-content img {
-    max-width: 100%; border-radius: 10px;
-    border: 1px solid var(--line);
-    box-shadow: 0 3px 14px rgba(0,0,0,0.12);
-    margin: 6px 0; display: block;
+  .je-md::placeholder { color: var(--text-3); }
+  .je-md.drag-over { background: var(--seal-bg); }
+  .je-preview {
+    flex: 1; min-width: 0; overflow-y: auto;
+    padding: 16px 20px 30px;
+    color: var(--text-0); font-size: 14px; line-height: 1.85;
+    border-left: 1px solid var(--line-soft);
   }
-  .je-content blockquote {
+  .je-preview h1, .je-preview h2, .je-preview h3, .je-preview h4 {
+    font-family: var(--font-serif); color: var(--text-0); margin: 14px 0 6px; line-height: 1.4;
+  }
+  .je-preview h2 { font-size: 19px; border-bottom: 1px solid var(--line); padding-bottom: 4px; }
+  .je-preview h3 { font-size: 16px; color: var(--seal); }
+  .je-preview h4 { font-size: 14px; }
+  .je-preview p { margin: 8px 0; }
+  .je-preview ul, .je-preview ol { padding-left: 22px; margin: 8px 0; }
+  .je-preview li { margin: 3px 0; }
+  .je-preview blockquote {
     margin: 8px 0; padding: 4px 14px;
     border-left: 3px solid var(--seal-soft);
     color: var(--text-2); background: var(--ink-bg);
     border-radius: 0 8px 8px 0;
   }
-  .je-content h3 { font-family: var(--font-serif); font-size: 17px; margin: 12px 0 4px; color: var(--text-0); }
-  .je-content ul, .je-content ol { padding-left: 22px; }
-  .je-content hr { border: none; border-top: 1px dashed var(--line-strong); margin: 14px 0; }
-  .je-content.drag-over { background: var(--seal-bg); }
+  .je-preview img {
+    max-width: 100%; border-radius: 10px;
+    border: 1px solid var(--line);
+    box-shadow: 0 3px 14px rgba(0,0,0,0.12);
+    margin: 8px 0; display: block;
+  }
+  .je-preview hr { border: none; border-top: 1px dashed var(--line-strong); margin: 14px 0; }
+  .je-preview code {
+    font-family: var(--font-mono); font-size: 12.5px;
+    background: var(--ink-bg); padding: 1px 5px; border-radius: 5px;
+  }
+  .je-preview pre {
+    background: var(--ink-bg); padding: 12px 14px; border-radius: 10px;
+    overflow-x: auto; border: 1px solid var(--line);
+  }
+  .je-preview pre code { background: none; padding: 0; }
+  .je-preview a { color: var(--seal); }
+
   .je-statusbar {
-    display: flex; align-items: center; justify-content: space-between;
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
     padding: 6px 18px;
     border-top: 1px solid var(--line-soft);
     font-family: var(--font-mono); font-size: 10.5px; color: var(--text-3);
-    flex-shrink: 0;
+    flex-shrink: 0; flex-wrap: wrap;
   }
   .je-savestate.saved { color: var(--ink-green); }
+  .je-actions { display: inline-flex; align-items: center; gap: 8px; }
+  .je-act {
+    border: 1px solid var(--line); background: transparent; color: var(--text-2);
+    border-radius: 7px; padding: 3px 9px; font-size: 10.5px; cursor: pointer;
+    font-family: var(--font-mono); white-space: nowrap;
+  }
+  .je-act:hover { color: var(--seal); border-color: var(--seal); background: var(--seal-bg); }
 
   /* 站点面板里的日志入口 */
   .panel-journal { padding: 12px 20px; border-top: 1px solid var(--line); }
@@ -3356,11 +3394,13 @@ svg.leaflet-image-layer.leaflet-interactive path {
     .journal-new-btn { margin: 8px; white-space: nowrap; }
     .journal-entry-list { display: flex; gap: 6px; padding: 8px; overflow-x: auto; overflow-y: hidden; }
     .je-item { min-width: 130px; margin-bottom: 0; flex-shrink: 0; }
-    .je-item .je-thumb { display: none; }
+    .je-split { flex-direction: column; }
+    .je-md { border-right: none; border-bottom: 1px solid var(--line); max-height: 42%; }
     .je-meta-row { flex-wrap: wrap; padding: 10px 12px 0; }
     .je-toolbar { padding: 8px 12px 6px; }
-    .je-content { padding: 12px 14px 24px; }
+    .je-preview { padding: 12px 14px 24px; }
   }
+
 
   /* ===================== Key 配置弹层 ===================== */
   .key-dialog-backdrop {
@@ -4009,12 +4049,14 @@ svg.leaflet-image-layer.leaflet-interactive path {
     </div>
 
     <!-- 站点日志（双击节点 / 面板按钮打开） -->
+    <!-- 站点日志（Markdown 文件版）：双击节点 / 面板按钮打开 -->
     <div class="journal-overlay" id="journalOverlay">
       <div class="journal-shell" role="dialog" aria-modal="true" aria-label="站点日志">
         <div class="journal-head">
           <span class="jh-badge" id="journalBadge">站点 · 01</span>
           <div class="jh-title" id="journalNodeName">站点名称</div>
           <span class="jh-sub" id="journalNodeSub"></span>
+          <button class="jh-folder" id="journalFolderBtn" title="选择「日志」文件夹（桌面 Chrome/Edge）">📁 连接日志文件夹</button>
           <button class="journal-close" id="journalCloseBtn" title="关闭（Esc）">✕</button>
         </div>
         <div class="journal-body">
@@ -4033,33 +4075,39 @@ svg.leaflet-image-layer.leaflet-interactive path {
               <button class="je-del-btn" id="jeDeleteBtn">🗑 删除</button>
             </div>
             <div class="je-toolbar">
-              <button class="je-tool" data-cmd="bold" title="加粗（Ctrl+B）"><b>B</b></button>
-              <button class="je-tool" data-cmd="italic" title="斜体（Ctrl+I）"><i>I</i></button>
-              <button class="je-tool" data-cmd="underline" title="下划线（Ctrl+U）"><u>U</u></button>
-              <button class="je-tool" data-cmd="strikeThrough" title="删除线"><s>S</s></button>
+              <button class="je-tool" data-md="bold" title="加粗（Ctrl+B）"><b>B</b></button>
+              <button class="je-tool" data-md="italic" title="斜体（Ctrl+I）"><i>I</i></button>
+              <button class="je-tool" data-md="strike" title="删除线"><s>S</s></button>
+              <button class="je-tool" data-md="code" title="行内代码">`代码`</button>
               <span class="je-tool-sep"></span>
-              <button class="je-tool" data-block="h3" title="小标题">标题</button>
-              <button class="je-tool" data-block="blockquote" title="引用">引用</button>
-              <button class="je-tool" data-block="p" title="正文">正文</button>
-              <span class="je-tool-sep"></span>
-              <button class="je-tool" data-cmd="insertUnorderedList" title="无序列表">•≡</button>
-              <button class="je-tool" data-cmd="insertOrderedList" title="有序列表">1≡</button>
-              <button class="je-tool" data-cmd="insertHorizontalRule" title="分割线">─</button>
+              <button class="je-tool" data-md="h2" title="小标题">标题</button>
+              <button class="je-tool" data-md="quote" title="引用">引用</button>
+              <button class="je-tool" data-md="ul" title="无序列表">• 列表</button>
+              <button class="je-tool" data-md="ol" title="有序列表">1. 列表</button>
+              <button class="je-tool" data-md="hr" title="分割线">─ 分割</button>
               <span class="je-tool-sep"></span>
               <button class="je-tool img" id="jeImgBtn" title="插入图片（也可直接粘贴 / 拖入）">🖼 图片</button>
-              <button class="je-tool" data-cmd="removeFormat" title="清除格式">✂格式</button>
             </div>
-            <div class="je-content" id="jeContent" contenteditable="true"
-                 data-placeholder="写点什么…支持直接粘贴 / 拖入图片"></div>
+            <div class="je-split">
+              <textarea class="je-md" id="jeMd" spellcheck="false"
+                placeholder="用 Markdown 写日志…&#10;工具栏帮你插入格式，右侧实时预览。&#10;图片会以「日志/img/」下的文件引用，整个文件夹可分享。"></textarea>
+              <div class="je-preview" id="jePreview"></div>
+            </div>
             <div class="je-statusbar">
-              <span id="jeImgHint">图片自动压缩后随行程保存在本地</span>
-              <span class="je-savestate" id="jeSaveState"></span>
+              <span id="jeImgHint">图片存到「日志/img/」并相对引用 · 把整个日志文件夹发给别人即可带图</span>
+              <span class="je-actions">
+                <button class="je-act" id="jeImportBtn" title="从 .md 文件载入本节点日志">⬆ 导入md</button>
+                <button class="je-act" id="jeExportBtn" title="下载本节点的 .md 文件">⬇ 导出md</button>
+                <span class="je-savestate" id="jeSaveState"></span>
+              </span>
             </div>
             <input type="file" id="jeFileInput" accept="image/*" multiple hidden />
+            <input type="file" id="jeImportInput" accept=".md,text/markdown" hidden />
           </div>
         </div>
       </div>
     </div>
+
 
     <!-- 高德 Key 配置弹层（替代原生 prompt，手机端可用） -->
     <div class="key-dialog-backdrop" id="keyDialogBackdrop">
@@ -5483,7 +5531,7 @@ svg.leaflet-image-layer.leaflet-interactive path {
     } else {
       html += '<div class="nhc-empty">暂无待办</div>';
     }
-    const jc = Array.isArray(node.journal) ? node.journal.length : 0;
+    const jc = (loadJournalIndex()[journalFileBase(node)] || 0);
     if (jc > 0) {
       html += '<div class="nhc-journal">📔 日志 ' + jc + ' 篇 · 双击节点查看</div>';
     } else {
@@ -6788,13 +6836,18 @@ svg.leaflet-image-layer.leaflet-interactive path {
   }
 
   // ====== 站点日志（双击节点 / 面板按钮打开）======
-  // 数据结构：node.journal = [{ id, date:'YYYY-MM-DD', title, html, createdAt, updatedAt }]
-  // 图片以压缩后的 dataURL 内嵌在 html 里，随 trips 一起存 localStorage / 导出。
+  // ==========================================================
+  // 站点日志（Markdown 文件版）
+  // 日志以 .md 文件存于用户选定的「日志」文件夹：日志/<tripId>_n<nodeId>.md
+  // 图片存于 日志/img/ 下，md 内用相对路径引用；整文件夹可直接分享。
+  // 桌面 Chrome/Edge 用 File System Access API 自动读写；不支持时降级为导入/导出 md。
+  // ==========================================================
   const journalOverlay = document.getElementById('journalOverlay');
   const journalBadgeEl = document.getElementById('journalBadge');
   const journalNodeNameEl = document.getElementById('journalNodeName');
   const journalNodeSubEl = document.getElementById('journalNodeSub');
   const journalCloseBtn = document.getElementById('journalCloseBtn');
+  const journalFolderBtn = document.getElementById('journalFolderBtn');
   const journalNewBtn = document.getElementById('journalNewBtn');
   const journalEntryList = document.getElementById('journalEntryList');
   const journalEditor = document.getElementById('journalEditor');
@@ -6802,195 +6855,348 @@ svg.leaflet-image-layer.leaflet-interactive path {
   const jeDateInput = document.getElementById('jeDateInput');
   const jeTitleInput = document.getElementById('jeTitleInput');
   const jeDeleteBtn = document.getElementById('jeDeleteBtn');
-  const jeContent = document.getElementById('jeContent');
-  const jeFileInput = document.getElementById('jeFileInput');
+  const jeMd = document.getElementById('jeMd');
+  const jePreview = document.getElementById('jePreview');
   const jeImgBtn = document.getElementById('jeImgBtn');
+  const jeFileInput = document.getElementById('jeFileInput');
+  const jeImportBtn = document.getElementById('jeImportBtn');
+  const jeImportInput = document.getElementById('jeImportInput');
+  const jeExportBtn = document.getElementById('jeExportBtn');
   const jeSaveState = document.getElementById('jeSaveState');
+  const jeImgHint = document.getElementById('jeImgHint');
   const openJournalBtn = document.getElementById('openJournalBtn');
   const pjCountEl = document.getElementById('pjCount');
 
-  let journalNodeId = null;   // 当前打开日志的节点 id
-  let journalEntryId = null;  // 当前编辑的条目 id
+  let journalNodeId = null;
+  let journalModel = [];          // [{date, title, body}]
+  let journalEntryIdx = -1;
   let journalSaveTimer = null;
+  let journalDirHandle = null;    // FileSystemDirectoryHandle
+  let journalFsMode = false;      // 是否已连接「日志」文件夹并可读写
+  const JIDB_NAME = 'journal-fs-v1';
+  const JIDB_KEY = 'dir-handle';
+  const JINDEX_KEY = 'journal-index-v1';
 
-  function ensureJournal(node) {
-    if (!Array.isArray(node.journal)) node.journal = [];
-    return node.journal;
-  }
-  function getJournalNode() { return nodeData.find(n => n.id === journalNodeId) || null; }
-  function getJournalEntry() {
-    const node = getJournalNode();
-    if (!node) return null;
-    return ensureJournal(node).find(en => en.id === journalEntryId) || null;
+  // ---------- 工具 ----------
+  function journalFileBase(node) {
+    const t = String(currentTripId || 'trip').replace(/[^A-Za-z0-9_-]/g, '_');
+    const n = String(node.id == null ? 'x' : node.id).replace(/[^A-Za-z0-9_-]/g, '_');
+    return t + '_n' + n;
   }
   function todayStr() {
     const d = new Date();
     return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
   }
-  function journalCount(node) { return Array.isArray(node?.journal) ? node.journal.length : 0; }
-  // 从 html 提取纯文本摘要 / 第一张图
-  function journalExcerpt(html) {
-    const tmp = document.createElement('div');
-    tmp.innerHTML = html || '';
-    const img = tmp.querySelector('img');
-    const text = (tmp.textContent || '').replace(/\s+/g, ' ').trim();
-    return { text: text.slice(0, 40), thumb: img ? img.src : null, hasImg: !!img };
-  }
-
-  function isJournalOpen() { return journalOverlay?.classList.contains('show'); }
-
-  function openJournal(nodeId) {
-    const node = nodeData.find(n => n.id === nodeId);
+  function loadJournalIndex() { try { return JSON.parse(localStorage.getItem(JINDEX_KEY) || '{}'); } catch (_) { return {}; } }
+  function saveJournalIndex(idx) { try { localStorage.setItem(JINDEX_KEY, JSON.stringify(idx)); } catch (_) {} }
+  function setJournalCount(node, count) {
     if (!node) return;
-    hideNodeHoverCard();
-    journalNodeId = nodeId;
-    const idx = nodeData.findIndex(n => n.id === nodeId);
-    journalBadgeEl.textContent = getNodeBadgeDisplayText(node, idx);
-    journalNodeNameEl.textContent = node.name || '未命名站点';
-    journalNodeSubEl.textContent = node.subtitle || '';
-    const arr = ensureJournal(node);
-    // 默认打开最近的一篇（列表第一条）
-    journalEntryId = arr.length > 0 ? sortedJournal(arr)[0].id : null;
-    renderJournalList();
-    renderJournalEditor();
-    journalOverlay.classList.add('show');
+    const idx = loadJournalIndex();
+    idx[journalFileBase(node)] = count;
+    saveJournalIndex(idx);
   }
 
-  function closeJournal() {
-    flushJournalSave();
-    journalOverlay.classList.remove('show');
-    journalNodeId = null;
-    journalEntryId = null;
-    updatePanelJournalCount();
+  // ---------- IndexedDB 句柄持久化 ----------
+  function _idb() {
+    return new Promise((res, rej) => {
+      const r = indexedDB.open(JIDB_NAME, 1);
+      r.onupgradeneeded = () => { try { r.result.createObjectStore('handles'); } catch (_) {} };
+      r.onsuccess = () => res(r.result);
+      r.onerror = () => rej(r.error);
+    });
   }
-
-  function sortedJournal(arr) {
-    // 日期倒序，同日期按创建时间倒序
-    return arr.slice().sort((a, b) =>
-      (b.date || '').localeCompare(a.date || '') ||
-      (b.createdAt || '').localeCompare(a.createdAt || ''));
+  async function _idbSet(k, v) {
+    const db = await _idb();
+    return new Promise((res, rej) => {
+      const tx = db.transaction('handles', 'readwrite');
+      tx.objectStore('handles').put(v, k);
+      tx.oncomplete = () => res(); tx.onerror = () => rej(tx.error);
+    });
   }
-
-  function renderJournalList() {
-    const node = getJournalNode();
-    if (!node || !journalEntryList) return;
-    const arr = sortedJournal(ensureJournal(node));
-    journalEntryList.innerHTML = '';
-    if (arr.length === 0) {
-      journalEntryList.innerHTML = '<div class="journal-list-empty">暂无日志<br>记录这一站的工作与见闻吧</div>';
-      return;
-    }
-    arr.forEach(en => {
-      const ex = journalExcerpt(en.html);
-      const item = document.createElement('div');
-      item.className = 'je-item' + (en.id === journalEntryId ? ' active' : '');
-      let h = '<div class="je-date">' + escapeHtml(en.date || '未定日期') + (ex.hasImg ? ' · 🖼' : '') + '</div>';
-      h += '<div class="je-title">' + escapeHtml(en.title || '未命名日志') + '</div>';
-      if (ex.text) h += '<div class="je-excerpt">' + escapeHtml(ex.text) + '</div>';
-      if (ex.thumb) h += '<img class="je-thumb" src="' + ex.thumb + '" alt="">';
-      item.innerHTML = h;
-      item.addEventListener('click', () => {
-        if (en.id === journalEntryId) return;
-        flushJournalSave();
-        journalEntryId = en.id;
-        renderJournalList();
-        renderJournalEditor();
-      });
-      journalEntryList.appendChild(item);
+  async function _idbGet(k) {
+    const db = await _idb();
+    return new Promise((res, rej) => {
+      const tx = db.transaction('handles', 'readonly');
+      const rq = tx.objectStore('handles').get(k);
+      rq.onsuccess = () => res(rq.result); rq.onerror = () => rej(rq.error);
     });
   }
 
-  function renderJournalEditor() {
-    const entry = getJournalEntry();
-    if (!entry) {
-      journalEditor.classList.add('hidden');
-      journalEditorEmpty.style.display = '';
+  // ---------- 文件夹连接 ----------
+  async function connectJournalFolder(force) {
+    if (!('showDirectoryPicker' in window)) { journalFsMode = false; updateFolderBtn(); return false; }
+    if (journalDirHandle) {
+      try { if ((await journalDirHandle.queryPermission({ mode: 'readwrite' })) === 'granted') { journalFsMode = true; updateFolderBtn(); return true; } } catch (_) {}
+    }
+    let h = await _idbGet(JIDB_KEY).catch(() => null);
+    if (h && !force) {
+      try {
+        const p = await h.queryPermission({ mode: 'readwrite' });
+        if (p === 'granted') { journalDirHandle = h; journalFsMode = true; updateFolderBtn(); return true; }
+        if (p === 'prompt') { const p2 = await h.requestPermission({ mode: 'readwrite' }); if (p2 === 'granted') { journalDirHandle = h; journalFsMode = true; updateFolderBtn(); return true; } }
+      } catch (_) {}
+    }
+    try {
+      h = await window.showDirectoryPicker({ mode: 'readwrite', id: 'journal-folder' });
+    } catch (err) {
+      journalFsMode = false; updateFolderBtn();
+      if (err && err.name !== 'AbortError') showToast('未连接「日志」文件夹：将用导入 / 导出方式处理', 'warn', 3200);
+      return false;
+    }
+    journalDirHandle = h; journalFsMode = true;
+    await _idbSet(JIDB_KEY, h).catch(() => {});
+    updateFolderBtn();
+    return true;
+  }
+  function updateFolderBtn() {
+    if (!journalFolderBtn) return;
+    if (journalFsMode) { journalFolderBtn.textContent = '📁 日志文件夹 ✓'; journalFolderBtn.classList.add('connected'); }
+    else { journalFolderBtn.textContent = '📁 连接日志文件夹'; journalFolderBtn.classList.remove('connected'); }
+    if (jeImgHint) jeImgHint.style.display = journalFsMode ? '' : 'none';
+  }
+
+  // ---------- 文件读写 ----------
+  async function readNodeMd(base) {
+    if (!journalDirHandle) return null;
+    try {
+      const f = await journalDirHandle.getFileHandle(base + '.md');
+      return await (await f.getFile()).text();
+    } catch (_) { return null; }
+  }
+  async function writeNodeMd(base, text) {
+    if (!journalDirHandle) return false;
+    const f = await journalDirHandle.getFileHandle(base + '.md', { create: true });
+    const w = await f.createWritable();
+    await w.write(text); await w.close();
+    return true;
+  }
+  async function saveImageToFolder(node, blob, ext) {
+    if (!journalDirHandle) return null;
+    const imgDir = await journalDirHandle.getDirectoryHandle('img', { create: true });
+    const name = journalFileBase(node) + '_' + Date.now().toString(36) + '.' + ext;
+    const f = await imgDir.getFileHandle(name, { create: true });
+    const w = await f.createWritable(); await w.write(blob); await w.close();
+    return 'img/' + name;
+  }
+
+  // ---------- Markdown 解析 / 组合 ----------
+  function parseMd(md) {
+    const lines = (md || '').replace(/\r/g, '').split('\n');
+    const entries = []; let cur = null;
+    for (const line of lines) {
+      const h = line.match(/^##\s+(.*)$/);
+      if (h) {
+        cur = { date: '', title: '', body: [] };
+        const rest = h[1].trim();
+        const dm = rest.match(/^(\d{4}-\d{2}-\d{2})[\s·\-–—:]*(.*)$/);
+        if (dm) { cur.date = dm[1]; cur.title = (dm[2] || '').trim(); }
+        else cur.title = rest;
+        entries.push(cur);
+      } else {
+        if (!cur) { cur = { date: '', title: '', body: [] }; entries.push(cur); }
+        cur.body.push(line);
+      }
+    }
+    entries.forEach(e => { e.body = e.body.join('\n').replace(/\n+$/, ''); });
+    // 过滤全空条目（如空文件解析出的 1 条占位），使空态正确触发
+    const cleaned = entries.filter(e => (e.date && e.date.trim()) || (e.title && e.title.trim()) || (e.body && e.body.trim()));
+    return cleaned;
+  }
+  function composeMd() {
+    const parts = journalModel.map(e => {
+      const head = '## ' + (e.date ? e.date + ' · ' : '') + (e.title || '');
+      const body = e.body || '';
+      return (head + (body ? '\n' + body : '')).replace(/\s+$/, '');
+    });
+    return parts.join('\n\n') + (parts.length ? '\n' : '');
+  }
+
+  // ---------- Markdown 渲染（轻量） ----------
+  function mdInline(s) {
+    s = s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    s = s.replace(/!\[([^\]]*)\]\(([^)\s]+)\)/g, (m, alt, src) => '<img alt="' + alt + '" src="' + src + '">');
+    s = s.replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, (m, t, h) => '<a href="' + h + '" target="_blank" rel="noopener">' + t + '</a>');
+    s = s.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+    s = s.replace(/(^|[^*])\*([^*\n]+)\*/g, '$1<em>$2</em>');
+    s = s.replace(/~~([^~]+)~~/g, '<del>$1</del>');
+    s = s.replace(/`([^`]+)`/g, '<code>$1</code>');
+    return s;
+  }
+  function mdToHtml(md) {
+    const lines = (md || '').replace(/\r/g, '').split('\n');
+    let html = '', i = 0, listType = null;
+    const closeList = () => { if (listType) { html += (listType === 'ul' ? '</ul>' : '</ol>'); listType = null; } };
+    while (i < lines.length) {
+      const line = lines[i];
+      if (/^```/.test(line)) {
+        closeList(); let code = ''; i++;
+        while (i < lines.length && !/^```/.test(lines[i])) { code += lines[i] + '\n'; i++; }
+        i++; html += '<pre><code>' + code.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</code></pre>'; continue;
+      }
+      const h = line.match(/^(#{1,6})\s+(.*)$/);
+      if (h) { closeList(); const lv = h[1].length; html += '<h' + lv + '>' + mdInline(h[2]) + '</h' + lv + '>'; i++; continue; }
+      if (/^(\s*[-*_])\s*(\s*[-*_]\s*){2,}$/.test(line)) { closeList(); html += '<hr>'; i++; continue; }
+      if (/^>\s?/.test(line)) {
+        closeList(); let q = '';
+        while (i < lines.length && /^>\s?/.test(lines[i])) { q += lines[i].replace(/^>\s?/, '') + '\n'; i++; }
+        html += '<blockquote>' + mdToHtml(q) + '</blockquote>'; continue;
+      }
+      if (/^\s*[-*+]\s+/.test(line)) {
+        if (listType !== 'ul') { closeList(); html += '<ul>'; listType = 'ul'; }
+        html += '<li>' + mdInline(line.replace(/^\s*[-*+]\s+/, '')) + '</li>'; i++; continue;
+      }
+      if (/^\s*\d+\.\s+/.test(line)) {
+        if (listType !== 'ol') { closeList(); html += '<ol>'; listType = 'ol'; }
+        html += '<li>' + mdInline(line.replace(/^\s*\d+\.\s+/, '')) + '</li>'; i++; continue;
+      }
+      if (/^\s*$/.test(line)) { closeList(); i++; continue; }
+      closeList(); let para = line; i++;
+      while (i < lines.length && !/^\s*$/.test(lines[i]) && !/^(#{1,6})\s/.test(lines[i]) && !/^>\s?/.test(lines[i]) && !/^\s*[-*+]\s+/.test(lines[i]) && !/^\s*\d+\.\s+/.test(lines[i]) && !/^```/.test(lines[i]) && !/^(\s*[-*_])\s*(\s*[-*_]\s*){2,}$/.test(lines[i])) { para += '\n' + lines[i]; i++; }
+      html += '<p>' + mdInline(para) + '</p>';
+    }
+    closeList();
+    return html;
+  }
+  const _imgUrlCache = new Map();
+  async function resolvePreviewImg(src) {
+    if (/^(https?:|data:)/.test(src)) return src;
+    if (!journalDirHandle) return '';
+    try {
+      const imgDir = await journalDirHandle.getDirectoryHandle('img');
+      const fname = src.split('/').pop();
+      const f = await imgDir.getFileHandle(fname);
+      const blob = await f.getFile();
+      if (_imgUrlCache.has(src)) URL.revokeObjectURL(_imgUrlCache.get(src));
+      const u = URL.createObjectURL(blob);
+      _imgUrlCache.set(src, u);
+      return u;
+    } catch (_) { return ''; }
+  }
+  let _previewTimer = null;
+  async function renderPreview() {
+    if (!jePreview) return;
+    const md = composeMd();
+    const tmp = document.createElement('div'); tmp.innerHTML = mdToHtml(md);
+    const imgs = Array.from(tmp.querySelectorAll('img'));
+    for (const im of imgs) {
+      const src = im.getAttribute('src') || '';
+      if (src && !/^(https?:|data:)/.test(src)) {
+        const u = await resolvePreviewImg(src);
+        if (u) im.src = u; else im.style.display = 'none';
+      }
+    }
+    jePreview.innerHTML = tmp.innerHTML;
+  }
+  function schedulePreview() {
+    if (_previewTimer) clearTimeout(_previewTimer);
+    _previewTimer = setTimeout(() => renderPreview(), 200);
+  }
+
+  // ---------- 渲染列表 / 编辑器 ----------
+  function getJournalNode() { return nodeData.find(n => n.id === journalNodeId) || null; }
+  function renderJournalList() {
+    if (!journalEntryList) return;
+    journalEntryList.innerHTML = '';
+    if (journalModel.length === 0) {
+      journalEntryList.innerHTML = '<div class="journal-list-empty">暂无日志<br>记录这一站的工作与见闻吧</div>';
       return;
     }
-    journalEditorEmpty.style.display = 'none';
-    journalEditor.classList.remove('hidden');
-    jeDateInput.value = entry.date || todayStr();
-    jeTitleInput.value = entry.title || '';
-    jeContent.innerHTML = entry.html || '';
-    jeSaveState.textContent = '';
+    journalModel.forEach((en, idx) => {
+      const text = (en.body || '').replace(/[#>*_`~]/g, '').replace(/\s+/g, ' ').trim();
+      const item = document.createElement('div');
+      item.className = 'je-item' + (idx === journalEntryIdx ? ' active' : '');
+      item.innerHTML = '<div class="je-date">' + (en.date || '未定日期') + '</div>' +
+        '<div class="je-title">' + (en.title || '未命名日志') + '</div>' +
+        (text ? '<div class="je-excerpt">' + text.slice(0, 40) + '</div>' : '');
+      item.addEventListener('click', () => selectEntry(idx));
+      journalEntryList.appendChild(item);
+    });
   }
-
-  function newJournalEntry() {
-    const node = getJournalNode();
-    if (!node) return;
+  function selectEntry(idx) {
     flushJournalSave();
-    const entry = {
-      id: 'j_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
-      date: todayStr(),
-      title: '',
-      html: '',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-    ensureJournal(node).push(entry);
-    journalEntryId = entry.id;
-    persistJournal();
+    journalEntryIdx = idx;
+    const en = journalModel[idx];
+    if (en) {
+      jeDateInput.value = en.date || todayStr();
+      jeTitleInput.value = en.title || '';
+      jeMd.value = en.body || '';
+    }
     renderJournalList();
-    renderJournalEditor();
-    setTimeout(() => jeTitleInput?.focus(), 50);
+    renderPreview();
+  }
+  function renderEditorForNode() {
+    const has = journalModel.length > 0;
+    journalEditor.classList.toggle('hidden', !has);
+    journalEditorEmpty.style.display = has ? 'none' : '';
+    if (has) selectEntry(journalModel.length - 1);
+    else { jeMd.value = ''; jeDateInput.value = todayStr(); jeTitleInput.value = ''; jePreview.innerHTML = ''; }
   }
 
-  function deleteJournalEntry() {
-    const node = getJournalNode();
-    const entry = getJournalEntry();
-    if (!node || !entry) return;
-    const name = entry.title || entry.date || '这篇日志';
+  // ---------- 增删 ----------
+  function newJournalEntry() {
+    flushJournalSave();
+    const entry = { date: todayStr(), title: '', body: '' };
+    journalModel.unshift(entry);
+    journalEntryIdx = 0;
+    renderJournalList();
+    renderEditorForNode();
+    jeTitleInput.focus();
+    scheduleSave();
+  }
+  async function deleteJournalEntry() {
+    const en = journalModel[journalEntryIdx];
+    if (!en) return;
+    const name = en.title || en.date || '这篇日志';
     if (!confirm('删除「' + name + '」？该操作不可恢复。')) return;
-    const arr = ensureJournal(node);
-    const i = arr.findIndex(en => en.id === entry.id);
-    if (i >= 0) arr.splice(i, 1);
-    const rest = sortedJournal(arr);
-    journalEntryId = rest.length > 0 ? rest[0].id : null;
-    persistJournal();
+    journalModel.splice(journalEntryIdx, 1);
+    journalEntryIdx = journalModel.length ? Math.max(0, journalEntryIdx - 1) : -1;
     renderJournalList();
-    renderJournalEditor();
-    showToast('🗑️ 日志已删除', 'success');
+    renderEditorForNode();
+    await flushJournalSave();
   }
 
-  // ---- 保存（600ms 防抖 + 关闭/切换时强制落盘）----
-  function scheduleJournalSave() {
+  // ---------- 保存 ----------
+  function scheduleSave() {
     if (journalSaveTimer) clearTimeout(journalSaveTimer);
     jeSaveState.textContent = '编辑中…';
     jeSaveState.classList.remove('saved');
-    journalSaveTimer = setTimeout(() => { journalSaveTimer = null; commitJournalEntry(); }, 600);
+    journalSaveTimer = setTimeout(() => { journalSaveTimer = null; flushJournalSave(); }, 600);
   }
-  function flushJournalSave() {
-    if (journalSaveTimer) { clearTimeout(journalSaveTimer); journalSaveTimer = null; commitJournalEntry(); }
-  }
-  function commitJournalEntry() {
-    const entry = getJournalEntry();
-    if (!entry) return;
-    entry.date = jeDateInput.value || entry.date;
-    entry.title = jeTitleInput.value.trim();
-    entry.html = jeContent.innerHTML;
-    entry.updatedAt = new Date().toISOString();
-    persistJournal(true);
-    renderJournalList();
-  }
-  function persistJournal(silent) {
-    try {
-      // 不走 saveData()（其内部 try-catch 会吃掉配额异常），显式写入以便捕获 QuotaExceeded
-      const t = getCurrentTrip();
-      if (t) t.updatedAt = new Date().toISOString();
-      localStorage.setItem(TRIPS_STORAGE, JSON.stringify(trips));
-      if (jeSaveState) {
-        jeSaveState.textContent = '✓ 已保存 ' + new Date().toTimeString().slice(0, 5);
-        jeSaveState.classList.add('saved');
-      }
-    } catch (err) {
-      if (jeSaveState) { jeSaveState.textContent = '⚠ 保存失败：空间不足'; jeSaveState.classList.remove('saved'); }
-      showToast('⚠️ 本地存储空间不足，图片较多时请删减旧图或导出备份', 'warn', 4200);
+  async function flushJournalSave() {
+    const node = getJournalNode();
+    if (!node || journalEntryIdx < 0 || !journalModel[journalEntryIdx]) return;
+    const en = journalModel[journalEntryIdx];
+    en.date = jeDateInput.value || en.date || '';
+    en.title = jeTitleInput.value.trim();
+    en.body = jeMd.value;
+    setJournalCount(node, journalModel.length);
+    if (!journalFsMode) {
+      jeSaveState.textContent = '⚠ 未连接文件夹，记得导出';
+      jeSaveState.classList.remove('saved');
+      updatePanelJournalCount();
+      return;
     }
+    try {
+      await writeNodeMd(journalFileBase(node), composeMd());
+      jeSaveState.textContent = '✓ 已保存 ' + new Date().toTimeString().slice(0, 5);
+      jeSaveState.classList.add('saved');
+    } catch (e) {
+      jeSaveState.textContent = '⚠ 保存失败';
+      jeSaveState.classList.remove('saved');
+      showToast('⚠️ 写入日志文件失败：' + (e && e.message ? e.message : e), 'warn', 4000);
+    }
+    updatePanelJournalCount();
+  }
+  function onMetaChange() { scheduleSave(); }
+  function onMdInput() {
+    if (journalEntryIdx >= 0 && journalModel[journalEntryIdx]) journalModel[journalEntryIdx].body = jeMd.value;
+    schedulePreview();
+    scheduleSave();
   }
 
-  // ---- 图片：压缩为 JPEG dataURL 后插入正文 ----
+  // ---------- 图片插入 ----------
   function compressImage(file, maxSide, quality) {
-    maxSide = maxSide || 1400; quality = quality || 0.82;
+    maxSide = maxSide || 1600; quality = quality || 0.82;
     return new Promise((resolve, reject) => {
       const fr = new FileReader();
       fr.onerror = reject;
@@ -6998,93 +7204,178 @@ svg.leaflet-image-layer.leaflet-interactive path {
         const img = new Image();
         img.onerror = reject;
         img.onload = () => {
-          let { width: w, height: h } = img;
+          let w = img.width, h = img.height;
           const scale = Math.min(1, maxSide / Math.max(w, h));
           w = Math.round(w * scale); h = Math.round(h * scale);
-          const cv = document.createElement('canvas');
-          cv.width = w; cv.height = h;
+          const cv = document.createElement('canvas'); cv.width = w; cv.height = h;
           const ctx = cv.getContext('2d');
-          ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, w, h); // JPEG 无透明，先铺白底
+          ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, w, h);
           ctx.drawImage(img, 0, 0, w, h);
-          resolve(cv.toDataURL('image/jpeg', quality));
+          cv.toBlob(b => resolve(b), 'image/jpeg', quality);
         };
         img.src = fr.result;
       };
       fr.readAsDataURL(file);
     });
   }
-  async function insertImagesToJournal(files) {
+  function blobToDataURL(blob) {
+    return new Promise((res, rej) => {
+      const fr = new FileReader();
+      fr.onerror = rej; fr.onload = () => res(fr.result);
+      fr.readAsDataURL(blob);
+    });
+  }
+  async function insertImages(files) {
     const imgs = Array.from(files || []).filter(f => f.type && f.type.startsWith('image/'));
     if (imgs.length === 0) return;
-    jeContent.focus();
+    const node = getJournalNode();
     for (const f of imgs) {
+      let ref = null;
       try {
-        const url = await compressImage(f);
-        // 插入到光标处；若无选区则附加到末尾
-        const sel = window.getSelection();
-        const imgEl = document.createElement('img');
-        imgEl.src = url;
-        if (sel && sel.rangeCount > 0 && jeContent.contains(sel.anchorNode)) {
-          const range = sel.getRangeAt(0);
-          range.deleteContents();
-          range.insertNode(imgEl);
-          range.setStartAfter(imgEl); range.collapse(true);
-          sel.removeAllRanges(); sel.addRange(range);
+        const blob = await compressImage(f);
+        if (journalFsMode && node) {
+          const path = await saveImageToFolder(node, blob, 'jpg');
+          ref = path ? '![](' + path + ')' : null;
         } else {
-          jeContent.appendChild(imgEl);
+          ref = '![](' + (await blobToDataURL(blob)) + ')';
         }
-      } catch (_) {
-        showToast('⚠️ 有一张图片读取失败', 'warn');
-      }
+      } catch (_) { ref = null; }
+      if (!ref) { showToast('⚠️ 有一张图片处理失败', 'warn'); continue; }
+      const s = jeMd.selectionStart, e = jeMd.selectionEnd, v = jeMd.value;
+      const sep = (s > 0 && v[s - 1] !== '\n') ? '\n' : '';
+      jeMd.value = v.slice(0, s) + sep + ref + '\n' + v.slice(e);
+      jeMd.selectionStart = jeMd.selectionEnd = s + sep.length + ref.length + 1;
     }
-    scheduleJournalSave();
+    jeMd.focus();
+    onMdInput();
   }
 
-  // ---- 事件绑定 ----
-  journalCloseBtn?.addEventListener('click', closeJournal);
-  journalOverlay?.addEventListener('click', (e) => { if (e.target === journalOverlay) closeJournal(); });
-  journalNewBtn?.addEventListener('click', newJournalEntry);
-  jeDeleteBtn?.addEventListener('click', deleteJournalEntry);
-  jeDateInput?.addEventListener('change', scheduleJournalSave);
-  jeTitleInput?.addEventListener('input', scheduleJournalSave);
-  jeContent?.addEventListener('input', scheduleJournalSave);
-  // 工具栏（mousedown preventDefault 保住正文选区）
-  document.querySelectorAll('.je-tool[data-cmd], .je-tool[data-block]').forEach(btn => {
-    btn.addEventListener('mousedown', (e) => e.preventDefault());
+  // ---------- 导入 / 导出 md ----------
+  function exportCurrentMd() {
+    const node = getJournalNode(); if (!node) return;
+    const base = journalFileBase(node);
+    const blob = new Blob([composeMd()], { type: 'text/markdown;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.download = base + '.md'; a.href = url; a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    showToast('已导出 ' + base + '.md', 'success', 2500);
+  }
+  async function importMdFile(file) {
+    const node = getJournalNode(); if (!node) return;
+    const text = await file.text();
+    journalModel = parseMd(text);
+    if (journalModel.length === 0) journalModel = [{ date: todayStr(), title: file.name.replace(/\.md$/i, ''), body: text.trim() }];
+    journalEntryIdx = journalModel.length - 1;
+    renderJournalList(); renderEditorForNode();
+    await flushJournalSave();
+    showToast('已导入 ' + file.name, 'success', 2500);
+  }
+
+  // ---------- 打开 / 关闭 ----------
+  function isJournalOpen() { return journalOverlay && journalOverlay.classList.contains('show'); }
+  async function openJournal(nodeId) {
+    const node = nodeData.find(n => n.id === nodeId);
+    if (!node) return;
+    hideNodeHoverCard();
+    // 清理旧版内嵌 journal（如有），避免体积膨胀
+    if (Array.isArray(node.journal)) { delete node.journal; try { saveData(); } catch (_) {} }
+    journalNodeId = nodeId;
+    const idx = nodeData.findIndex(n => n.id === nodeId);
+    journalBadgeEl.textContent = getNodeBadgeDisplayText(node, idx);
+    journalNodeNameEl.textContent = node.name || '未命名站点';
+    journalNodeSubEl.textContent = node.subtitle || '';
+    updateFolderBtn();
+    const ok = await connectJournalFolder(false);
+    const base = journalFileBase(node);
+    const raw = ok ? await readNodeMd(base) : null;
+    journalModel = parseMd(raw || '');
+    journalEntryIdx = -1;
+    renderJournalList();
+    renderEditorForNode();
+    if (ok && journalModel.length === 0) setJournalCount(node, 0);
+    jeSaveState.textContent = ok ? '' : '未连接文件夹 · 用「导入/导出」或上方连接';
+    jeSaveState.classList.remove('saved');
+    journalOverlay.classList.add('show');
+  }
+  async function closeJournal() {
+    await flushJournalSave();
+    journalOverlay.classList.remove('show');
+    journalNodeId = null; journalEntryIdx = -1; journalModel = [];
+    updatePanelJournalCount();
+  }
+
+  // ---------- 工具栏（Markdown 语法插入） ----------
+  function mdWrap(before, after, placeholder) {
+    const s = jeMd.selectionStart, e = jeMd.selectionEnd, v = jeMd.value;
+    const sel = v.slice(s, e) || placeholder || '';
+    jeMd.value = v.slice(0, s) + before + sel + after + v.slice(e);
+    jeMd.focus();
+    jeMd.selectionStart = s + before.length;
+    jeMd.selectionEnd = s + before.length + sel.length;
+    onMdInput();
+  }
+  function mdLine(prefix) {
+    const s = jeMd.selectionStart, v = jeMd.value;
+    const lineStart = v.lastIndexOf('\n', s - 1) + 1;
+    jeMd.value = v.slice(0, lineStart) + prefix + v.slice(lineStart);
+    jeMd.focus();
+    jeMd.selectionStart = jeMd.selectionEnd = lineStart + prefix.length;
+    onMdInput();
+  }
+
+  // ---------- 事件绑定 ----------
+  journalCloseBtn && journalCloseBtn.addEventListener('click', closeJournal);
+  journalOverlay && journalOverlay.addEventListener('click', (e) => { if (e.target === journalOverlay) closeJournal(); });
+  journalNewBtn && journalNewBtn.addEventListener('click', newJournalEntry);
+  jeDeleteBtn && jeDeleteBtn.addEventListener('click', deleteJournalEntry);
+  jeDateInput && jeDateInput.addEventListener('change', onMetaChange);
+  jeTitleInput && jeTitleInput.addEventListener('input', onMetaChange);
+  jeMd && jeMd.addEventListener('input', onMdInput);
+  journalFolderBtn && journalFolderBtn.addEventListener('click', () => connectJournalFolder(true).then(ok => { if (ok && journalNodeId != null) { const id = journalNodeId; openJournal(id); } }));
+  jeImgBtn && jeImgBtn.addEventListener('click', () => jeFileInput && jeFileInput.click());
+  jeFileInput && jeFileInput.addEventListener('change', () => { insertImages(jeFileInput.files); jeFileInput.value = ''; });
+  jeImportBtn && jeImportBtn.addEventListener('click', () => jeImportInput && jeImportInput.click());
+  jeImportInput && jeImportInput.addEventListener('change', () => { if (jeImportInput.files[0]) importMdFile(jeImportInput.files[0]); jeImportInput.value = ''; });
+  jeExportBtn && jeExportBtn.addEventListener('click', exportCurrentMd);
+  document.querySelectorAll('.je-tool[data-md]').forEach(btn => {
+    btn.addEventListener('mousedown', e => e.preventDefault());
     btn.addEventListener('click', () => {
-      jeContent.focus();
-      if (btn.dataset.cmd) document.execCommand(btn.dataset.cmd, false, null);
-      else if (btn.dataset.block) document.execCommand('formatBlock', false, '<' + btn.dataset.block + '>');
-      scheduleJournalSave();
+      const cmd = btn.dataset.md;
+      if (cmd === 'bold') mdWrap('**', '**', '加粗文字');
+      else if (cmd === 'italic') mdWrap('*', '*', '斜体');
+      else if (cmd === 'strike') mdWrap('~~', '~~', '删除');
+      else if (cmd === 'code') mdWrap('`', '`', 'code');
+      else if (cmd === 'h2') mdLine('### ');
+      else if (cmd === 'quote') mdLine('> ');
+      else if (cmd === 'ul') mdLine('- ');
+      else if (cmd === 'ol') mdLine('1. ');
+      else if (cmd === 'hr') mdLine('\n---\n');
     });
   });
-  jeImgBtn?.addEventListener('mousedown', (e) => e.preventDefault());
-  jeImgBtn?.addEventListener('click', () => jeFileInput?.click());
-  jeFileInput?.addEventListener('change', () => { insertImagesToJournal(jeFileInput.files); jeFileInput.value = ''; });
-  // 粘贴图片
-  jeContent?.addEventListener('paste', (e) => {
-    const items = e.clipboardData?.items || [];
+  jeMd && jeMd.addEventListener('paste', (e) => {
+    const items = (e.clipboardData && e.clipboardData.items) || [];
     const files = [];
     for (const it of items) { if (it.type && it.type.startsWith('image/')) { const f = it.getAsFile(); if (f) files.push(f); } }
-    if (files.length > 0) { e.preventDefault(); insertImagesToJournal(files); }
+    if (files.length) { e.preventDefault(); insertImages(files); }
   });
-  // 拖拽图片
-  jeContent?.addEventListener('dragover', (e) => { e.preventDefault(); jeContent.classList.add('drag-over'); });
-  jeContent?.addEventListener('dragleave', () => jeContent.classList.remove('drag-over'));
-  jeContent?.addEventListener('drop', (e) => {
-    e.preventDefault(); jeContent.classList.remove('drag-over');
-    if (e.dataTransfer?.files?.length) insertImagesToJournal(e.dataTransfer.files);
+  jeMd && jeMd.addEventListener('dragover', (e) => { e.preventDefault(); jeMd.classList.add('drag-over'); });
+  jeMd && jeMd.addEventListener('dragleave', () => jeMd.classList.remove('drag-over'));
+  jeMd && jeMd.addEventListener('drop', (e) => {
+    e.preventDefault(); jeMd.classList.remove('drag-over');
+    if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length) insertImages(e.dataTransfer.files);
   });
-  // 面板入口按钮
-  openJournalBtn?.addEventListener('click', () => { if (activeNodeId != null) openJournal(activeNodeId); });
+  openJournalBtn && openJournalBtn.addEventListener('click', () => { if (activeNodeId != null) openJournal(activeNodeId); });
 
-  // 站点面板上的日志篇数角标
   function updatePanelJournalCount() {
     if (!pjCountEl) return;
     const node = nodeData.find(n => n.id === activeNodeId);
-    const c = journalCount(node);
+    if (!node) { pjCountEl.textContent = ''; return; }
+    const idx = loadJournalIndex();
+    const c = idx[journalFileBase(node)] || 0;
     pjCountEl.textContent = c > 0 ? String(c) : '';
   }
+
 
   // 双击节点 → 打开该节点的日志
   function bindMarkerDblClick() {
@@ -7272,6 +7563,8 @@ svg.leaflet-image-layer.leaflet-interactive path {
         appVersion: '路图 / JSON export',
         nodes: JSON.parse(JSON.stringify(nodeData)),
         segments: JSON.parse(JSON.stringify(ROUTE_SEGMENTS)),
+        // 站点日志不随 JSON 导出：它们作为独立 .md 文件存于同目录「日志/」文件夹，分享时连同该文件夹一起发送即可。
+        logsNote: '站点日志为独立 .md 文件，位于本 JSON 同目录的「日志/」文件夹（日志/<tripId>_n<nodeId>.md），分享时请一并带上该文件夹。',
       };
       const json = JSON.stringify(payload, null, 2);
       const blob = new Blob([json], { type: 'application/json;charset=utf-8' });
