@@ -1133,9 +1133,13 @@ svg.leaflet-image-layer.leaflet-interactive path {
   .node-hover-card .nhc-todo .pd {
     width: 5px; height: 5px; border-radius: 50%;
     margin-top: 6px; flex-shrink: 0;
-    background: var(--seal);
+    background: #ef4444;
   }
+  .node-hover-card .nhc-todo .pd.normal { background: #facc15; box-shadow: 0 0 0 1px rgba(0,0,0,0.08); }
+  .node-hover-card .nhc-todo .pd.low { background: var(--text-3); }
   .node-hover-card .nhc-todo.done .pd { background: var(--text-3); }
+  .node-hover-card .nhc-todo.done .pd.normal { background: var(--text-3); }
+  .node-hover-card .nhc-todo.done .pd.low { background: var(--text-3); }
   .node-hover-card .nhc-todo-text {
     overflow: hidden; text-overflow: ellipsis;
     display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical;
@@ -2301,10 +2305,10 @@ svg.leaflet-image-layer.leaflet-interactive path {
   }
   .priority-dot:hover { transform: scale(1.3); }
   .priority-dot.high {
-    background: var(--seal);
-    box-shadow: 0 0 6px rgba(244,63,94,0.6);
+    background: #ef4444;
+    box-shadow: 0 0 6px rgba(239,68,68,0.55);
   }
-  .priority-dot.normal { background: var(--seal); box-shadow: 0 0 4px rgba(245,158,11,0.4); }
+  .priority-dot.normal { background: #facc15; box-shadow: 0 0 0 1px rgba(0,0,0,0.08), 0 0 4px rgba(250,204,21,0.45); }
   .priority-dot.low { background: var(--text-3); }
 
   .todo-drag-handle {
@@ -2408,8 +2412,8 @@ svg.leaflet-image-layer.leaflet-interactive path {
     transition: all 0.2s;
   }
   .pri-btn .pd { width: 7px; height: 7px; border-radius: 50%; }
-  .pri-btn[data-pri="high"]   .pd { background: var(--seal); }
-  .pri-btn[data-pri="normal"] .pd { background: var(--seal); }
+  .pri-btn[data-pri="high"]   .pd { background: #ef4444; }
+  .pri-btn[data-pri="normal"] .pd { background: #facc15; box-shadow: 0 0 0 1px rgba(0,0,0,0.08); }
   .pri-btn[data-pri="low"]    .pd { background: var(--text-3); }
   .pri-btn.active {
     background: rgba(6,182,212,0.10);
@@ -3183,14 +3187,11 @@ svg.leaflet-image-layer.leaflet-interactive path {
     overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
   }
   .journal-head .jh-sub { font-size: 11px; color: var(--text-3); font-family: var(--font-mono); white-space: nowrap; }
-  .jh-folder {
-    border: 1px solid var(--line); background: transparent;
-    color: var(--text-2); font-family: var(--font-mono); font-size: 11px;
-    padding: 5px 10px; border-radius: 999px; cursor: pointer; white-space: nowrap;
-    flex-shrink: 0; transition: all .15s;
+  .jh-path {
+    margin-left: auto;
+    color: var(--text-3); font-family: var(--font-mono); font-size: 11px;
+    white-space: nowrap; flex-shrink: 0;
   }
-  .jh-folder:hover { color: var(--seal); border-color: var(--seal); background: var(--seal-bg); }
-  .jh-folder.connected { color: var(--ink-green); border-color: var(--ink-green); }
   .journal-close {
     border: 1px solid var(--line); background: transparent;
     color: var(--text-2); width: 30px; height: 30px;
@@ -3355,14 +3356,19 @@ svg.leaflet-image-layer.leaflet-interactive path {
   .je-preview a { color: var(--seal); }
 
   .je-statusbar {
-    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    gap: 10px;
     padding: 6px 18px;
     border-top: 1px solid var(--line-soft);
     font-family: var(--font-mono); font-size: 10.5px; color: var(--text-3);
-    flex-shrink: 0; flex-wrap: wrap;
+    flex-shrink: 0;
   }
+  .je-savestate { justify-self: start; }
   .je-savestate.saved { color: var(--ink-green); }
-  .je-actions { display: inline-flex; align-items: center; gap: 8px; }
+  .je-actions { display: inline-flex; align-items: center; gap: 8px; justify-self: end; }
+  .je-layout { justify-self: center; }
   .je-act {
     border: 1px solid var(--line); background: transparent; color: var(--text-2);
     border-radius: 7px; padding: 3px 9px; font-size: 10.5px; cursor: pointer;
@@ -3371,7 +3377,6 @@ svg.leaflet-image-layer.leaflet-interactive path {
   .je-act:hover { color: var(--seal); border-color: var(--seal); background: var(--seal-bg); }
 
   /* 三态布局滑块：左=仅编辑 中=双屏 右=仅预览 */
-  .je-status-left { display: inline-flex; align-items: center; gap: 12px; flex-wrap: wrap; }
   .je-layout { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; flex-shrink: 0; }
   .je-layout button {
     height: 22px; min-width: 26px; padding: 0 9px; border: none; background: transparent;
@@ -3383,6 +3388,72 @@ svg.leaflet-image-layer.leaflet-interactive path {
   .je-split.mode-preview .je-md { display: none; }
   .je-split.mode-preview .je-preview { border-left: none; }
   .je-preview u { text-decoration: underline; text-decoration-color: var(--seal); text-underline-offset: 2px; }
+
+  /* 全屏阅读器 */
+  .je-reader {
+    display: none; position: fixed; inset: 0; z-index: 2000;
+    background: var(--bg-0); color: var(--text-0);
+    flex-direction: column;
+  }
+  .je-reader.show { display: flex; }
+  .je-reader:fullscreen { background: var(--bg-0); }
+  .je-reader-header {
+    display: flex; align-items: center; justify-content: space-between; gap: 16px;
+    padding: 14px 24px; border-bottom: 1px solid var(--line-soft);
+    background: var(--bg-glass); backdrop-filter: blur(12px); flex-shrink: 0;
+  }
+  .je-reader-title {
+    font-family: var(--font-serif); font-size: 17px; color: var(--text-0);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .je-reader-title .sub {
+    font-family: var(--font-mono); font-size: 10px; color: var(--text-3); margin-left: 10px;
+  }
+  .je-reader-close {
+    border: 1px solid var(--line); background: transparent; color: var(--text-2);
+    border-radius: 8px; padding: 6px 12px; font-size: 12px; cursor: pointer;
+    font-family: var(--font-mono);
+  }
+  .je-reader-close:hover { color: var(--seal); border-color: var(--seal); background: var(--seal-bg); }
+  .je-reader-content {
+    flex: 1; min-height: 0; overflow-y: auto;
+    padding: 28px calc(50% - 360px); font-size: 16px; line-height: 1.95;
+  }
+  .je-reader-content h1, .je-reader-content h2, .je-reader-content h3, .je-reader-content h4 {
+    font-family: var(--font-serif); color: var(--text-0); margin: 18px 0 10px; line-height: 1.4;
+  }
+  .je-reader-content h1 { font-size: 26px; }
+  .je-reader-content h2 { font-size: 21px; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+  .je-reader-content h3 { font-size: 18px; color: var(--seal); }
+  .je-reader-content p { margin: 12px 0; }
+  .je-reader-content ul, .je-reader-content ol { padding-left: 28px; margin: 12px 0; }
+  .je-reader-content li { margin: 5px 0; }
+  .je-reader-content blockquote {
+    margin: 14px 0; padding: 8px 18px;
+    border-left: 3px solid var(--seal-soft);
+    color: var(--text-2); background: var(--ink-bg);
+    border-radius: 0 10px 10px 0;
+  }
+  .je-reader-content img {
+    max-width: 100%; border-radius: 12px;
+    border: 1px solid var(--line); box-shadow: 0 4px 18px rgba(0,0,0,0.12);
+    margin: 14px 0; display: block;
+  }
+  .je-reader-content hr { border: none; border-top: 1px dashed var(--line-strong); margin: 20px 0; }
+  .je-reader-content code {
+    font-family: var(--font-mono); font-size: 13.5px;
+    background: var(--ink-bg); padding: 2px 6px; border-radius: 5px;
+  }
+  .je-reader-content pre {
+    background: var(--ink-bg); padding: 14px 16px; border-radius: 10px;
+    overflow-x: auto; border: 1px solid var(--line);
+  }
+  .je-reader-content a { color: var(--seal); }
+  @media (max-width: 920px) {
+    .je-reader-content { padding: 20px 22px; font-size: 15px; }
+    .je-reader-header { padding: 12px 16px; }
+    .je-reader-title { font-size: 15px; }
+  }
 
   /* 站点面板里的日志入口 */
   .panel-journal { padding: 12px 20px; border-top: 1px solid var(--line); }
@@ -4083,7 +4154,7 @@ svg.leaflet-image-layer.leaflet-interactive path {
           <span class="jh-badge" id="journalBadge">站点 · 01</span>
           <div class="jh-title" id="journalNodeName">站点名称</div>
           <span class="jh-sub" id="journalNodeSub"></span>
-          <button class="jh-folder" id="journalFolderBtn" title="选择「日志」文件夹（桌面 Chrome/Edge）">📁 连接日志文件夹</button>
+          <span class="jh-path" id="journalPath"></span>
           <button class="journal-close" id="journalCloseBtn" title="关闭（Esc）">✕</button>
         </div>
         <div class="journal-body">
@@ -4119,19 +4190,24 @@ svg.leaflet-image-layer.leaflet-interactive path {
               <div class="je-preview" id="jePreview"></div>
             </div>
             <div class="je-statusbar">
-              <span class="je-status-left">
-                <span id="jeImgHint">图片存到「日志/img/」并相对引用 · 把整个日志文件夹发给别人即可带图</span>
-                <span class="je-layout" id="jeLayout" role="group" aria-label="编辑/预览布局">
-                  <button data-mode="edit" title="只看编辑">左</button>
-                  <button data-mode="split" class="active" title="双屏">中</button>
-                  <button data-mode="preview" title="只看预览">右</button>
-                </span>
+              <span class="je-savestate" id="jeSaveState"></span>
+              <span class="je-layout" id="jeLayout" role="group" aria-label="编辑/预览布局">
+                <button data-mode="edit" title="只看编辑"><</button>
+                <button data-mode="split" class="active" title="双屏">O</button>
+                <button data-mode="preview" title="只看预览">></button>
               </span>
               <span class="je-actions">
+                <button class="je-act" id="jeReaderBtn" title="全屏阅读当前章节">⛶ 全屏</button>
                 <button class="je-act" id="jeImportBtn" title="从 .md 文件载入本节点日志">⬆ 导入md</button>
                 <button class="je-act" id="jeExportBtn" title="下载本节点的 .md 文件">⬇ 导出md</button>
-                <span class="je-savestate" id="jeSaveState"></span>
               </span>
+            </div>
+            <div class="je-reader" id="jeReader">
+              <div class="je-reader-header">
+                <div class="je-reader-title" id="jeReaderTitle">日志阅读</div>
+                <button class="je-reader-close" id="jeReaderClose" title="退出全屏（Esc）">✕ 关闭</button>
+              </div>
+              <div class="je-reader-content je-preview" id="jeReaderContent"></div>
             </div>
             <input type="file" id="jeFileInput" accept="image/*" multiple hidden />
             <input type="file" id="jeImportInput" accept=".md,text/markdown" hidden />
@@ -5551,8 +5627,9 @@ svg.leaflet-image-layer.leaflet-interactive path {
       html += '</div>';
       html += '<div class="nhc-todos">';
       top3.forEach(t => {
+        const pri = t.priority || 'normal';
         html += '<div class="nhc-todo' + (t.done ? ' done' : '') + '">';
-        html += '<span class="pd"></span>';
+        html += '<span class="pd ' + pri + '"></span>';
         html += '<span class="nhc-todo-text">' + escapeHtml(t.text) + '</span>';
         html += '</div>';
       });
@@ -6879,7 +6956,7 @@ svg.leaflet-image-layer.leaflet-interactive path {
   const journalNodeNameEl = document.getElementById('journalNodeName');
   const journalNodeSubEl = document.getElementById('journalNodeSub');
   const journalCloseBtn = document.getElementById('journalCloseBtn');
-  const journalFolderBtn = document.getElementById('journalFolderBtn');
+  const journalPathEl = document.getElementById('journalPath');
   const journalNewBtn = document.getElementById('journalNewBtn');
   const journalEntryList = document.getElementById('journalEntryList');
   const journalEditor = document.getElementById('journalEditor');
@@ -6894,6 +6971,11 @@ svg.leaflet-image-layer.leaflet-interactive path {
   const jeImportBtn = document.getElementById('jeImportBtn');
   const jeImportInput = document.getElementById('jeImportInput');
   const jeExportBtn = document.getElementById('jeExportBtn');
+  const jeReaderBtn = document.getElementById('jeReaderBtn');
+  const jeReader = document.getElementById('jeReader');
+  const jeReaderContent = document.getElementById('jeReaderContent');
+  const jeReaderTitle = document.getElementById('jeReaderTitle');
+  const jeReaderClose = document.getElementById('jeReaderClose');
   const jeSaveState = document.getElementById('jeSaveState');
   const jeImgHint = document.getElementById('jeImgHint');
   const openJournalBtn = document.getElementById('openJournalBtn');
@@ -6955,18 +7037,45 @@ svg.leaflet-image-layer.leaflet-interactive path {
   }
 
   // ---------- 文件夹连接 ----------
+  async function isDirHandleValid(h) {
+    try {
+      // 真正访问一次目录：空目录会返回 {done:true}，句柄失效或被删则抛错
+      await h.values().next();
+      return true;
+    } catch (_) { return false; }
+  }
+  async function invalidateJournalDir() {
+    journalDirHandle = null;
+    journalFsMode = false;
+    try { await _idbSet(JIDB_KEY, null); } catch (_) {}
+  }
   async function connectJournalFolder(force) {
     if (!('showDirectoryPicker' in window)) { journalFsMode = false; updateFolderBtn(); return false; }
     if (journalDirHandle) {
-      try { if ((await journalDirHandle.queryPermission({ mode: 'readwrite' })) === 'granted') { journalFsMode = true; updateFolderBtn(); return true; } } catch (_) {}
+      try {
+        if ((await journalDirHandle.queryPermission({ mode: 'readwrite' })) === 'granted' && await isDirHandleValid(journalDirHandle)) {
+          journalFsMode = true; updateFolderBtn(); return true;
+        }
+      } catch (_) {}
+      await invalidateJournalDir();
     }
     let h = await _idbGet(JIDB_KEY).catch(() => null);
     if (h && !force) {
+      let stale = false;
       try {
         const p = await h.queryPermission({ mode: 'readwrite' });
-        if (p === 'granted') { journalDirHandle = h; journalFsMode = true; updateFolderBtn(); return true; }
-        if (p === 'prompt') { const p2 = await h.requestPermission({ mode: 'readwrite' }); if (p2 === 'granted') { journalDirHandle = h; journalFsMode = true; updateFolderBtn(); return true; } }
-      } catch (_) {}
+        if (p === 'granted') {
+          if (await isDirHandleValid(h)) { journalDirHandle = h; journalFsMode = true; updateFolderBtn(); return true; }
+          stale = true;
+        } else if (p === 'prompt') {
+          const p2 = await h.requestPermission({ mode: 'readwrite' });
+          if (p2 === 'granted') {
+            if (await isDirHandleValid(h)) { journalDirHandle = h; journalFsMode = true; updateFolderBtn(); return true; }
+            stale = true;
+          }
+        }
+      } catch (_) { stale = true; }
+      if (stale) await invalidateJournalDir();
     }
     try {
       h = await window.showDirectoryPicker({ mode: 'readwrite', id: 'journal-folder' });
@@ -6981,9 +7090,10 @@ svg.leaflet-image-layer.leaflet-interactive path {
     return true;
   }
   function updateFolderBtn() {
-    if (!journalFolderBtn) return;
-    if (journalFsMode) { journalFolderBtn.textContent = '📁 日志文件夹 ✓'; journalFolderBtn.classList.add('connected'); }
-    else { journalFolderBtn.textContent = '📁 连接日志文件夹'; journalFolderBtn.classList.remove('connected'); }
+    if (journalPathEl) {
+      const node = getJournalNode();
+      journalPathEl.textContent = node ? '日志/' + journalFileBase(node) + '.md' : '';
+    }
     if (jeImgHint) jeImgHint.style.display = journalFsMode ? '' : 'none';
   }
 
@@ -6995,20 +7105,33 @@ svg.leaflet-image-layer.leaflet-interactive path {
       return await (await f.getFile()).text();
     } catch (_) { return null; }
   }
+  function isFsStaleError(e) {
+    return e && (e.name === 'NotFoundError' || e.name === 'InvalidStateError' || e.name === 'NotAllowedError');
+  }
   async function writeNodeMd(base, text) {
     if (!journalDirHandle) return false;
-    const f = await journalDirHandle.getFileHandle(base + '.md', { create: true });
-    const w = await f.createWritable();
-    await w.write(text); await w.close();
-    return true;
+    try {
+      const f = await journalDirHandle.getFileHandle(base + '.md', { create: true });
+      const w = await f.createWritable();
+      await w.write(text); await w.close();
+      return true;
+    } catch (e) {
+      if (isFsStaleError(e)) await invalidateJournalDir();
+      throw e;
+    }
   }
   async function saveImageToFolder(node, blob, ext) {
     if (!journalDirHandle) return null;
-    const imgDir = await journalDirHandle.getDirectoryHandle('img', { create: true });
-    const name = journalFileBase(node) + '_' + Date.now().toString(36) + '.' + ext;
-    const f = await imgDir.getFileHandle(name, { create: true });
-    const w = await f.createWritable(); await w.write(blob); await w.close();
-    return 'img/' + name;
+    try {
+      const imgDir = await journalDirHandle.getDirectoryHandle('img', { create: true });
+      const name = journalFileBase(node) + '_' + Date.now().toString(36) + '.' + ext;
+      const f = await imgDir.getFileHandle(name, { create: true });
+      const w = await f.createWritable(); await w.write(blob); await w.close();
+      return 'img/' + name;
+    } catch (e) {
+      if (isFsStaleError(e)) await invalidateJournalDir();
+      throw e;
+    }
   }
 
   // ---------- Markdown 解析 / 组合 ----------
@@ -7183,8 +7306,14 @@ svg.leaflet-image-layer.leaflet-interactive path {
     const entry = { date: todayStr(), title: '', body: '' };
     journalModel.unshift(entry);
     journalEntryIdx = 0;
+    // 先清空编辑器，避免 selectEntry/flushJournalSave 把旧内容写进新条目
+    journalEditor.classList.remove('hidden');
+    journalEditorEmpty.style.display = 'none';
+    jeDateInput.value = entry.date;
+    jeTitleInput.value = '';
+    jeMd.value = '';
     renderJournalList();
-    renderEditorForNode();
+    renderPreview();
     jeTitleInput.focus();
     scheduleSave();
   }
@@ -7413,7 +7542,6 @@ svg.leaflet-image-layer.leaflet-interactive path {
   jeDateInput && jeDateInput.addEventListener('change', onMetaChange);
   jeTitleInput && jeTitleInput.addEventListener('input', onMetaChange);
   jeMd && jeMd.addEventListener('input', onMdInput);
-  journalFolderBtn && journalFolderBtn.addEventListener('click', () => connectJournalFolder(true).then(ok => { if (ok && journalNodeId != null) { const id = journalNodeId; openJournal(id); } }));
   jeImgBtn && jeImgBtn.addEventListener('click', () => jeFileInput && jeFileInput.click());
   jeFileInput && jeFileInput.addEventListener('change', () => { insertImages(jeFileInput.files); jeFileInput.value = ''; });
   jeImportBtn && jeImportBtn.addEventListener('click', () => jeImportInput && jeImportInput.click());
@@ -7442,6 +7570,33 @@ svg.leaflet-image-layer.leaflet-interactive path {
     if (jeLayout) jeLayout.querySelectorAll('button').forEach(b => b.classList.toggle('active', b.dataset.mode === mode));
     try { localStorage.setItem('journal-layout', mode); } catch (_) {}
   }
+
+  // 全屏阅读当前章节
+  function openJournalReader() {
+    if (!jeReader || !jeReaderContent) return;
+    const en = journalModel[journalEntryIdx];
+    if (jeReaderTitle) {
+      const t = (en && (en.date || en.title)) ? ((en.date || '') + (en.date && en.title ? ' · ' : '') + (en.title || '')) : '日志阅读';
+      jeReaderTitle.innerHTML = escapeHtml(t) + '<span class="sub">按 Esc 退出</span>';
+    }
+    jeReaderContent.innerHTML = jePreview ? jePreview.innerHTML : '';
+    jeReader.classList.add('show');
+    if (jeReader.requestFullscreen) {
+      jeReader.requestFullscreen().catch(() => {});
+    }
+  }
+  function closeJournalReader() {
+    if (!jeReader) return;
+    jeReader.classList.remove('show');
+    if (document.fullscreenElement && document.exitFullscreen) {
+      document.exitFullscreen().catch(() => {});
+    }
+  }
+  document.addEventListener('fullscreenchange', () => {
+    if (jeReader && !document.fullscreenElement && jeReader.classList.contains('show')) {
+      jeReader.classList.remove('show');
+    }
+  });
   if (jeLayout) {
     jeLayout.addEventListener('click', e => {
       const btn = e.target.closest('button[data-mode]');
@@ -7451,6 +7606,9 @@ svg.leaflet-image-layer.leaflet-interactive path {
     try { savedMode = localStorage.getItem('journal-layout') || 'split'; } catch (_) {}
     applyJournalLayout(savedMode);
   }
+  jeReaderBtn && jeReaderBtn.addEventListener('click', openJournalReader);
+  jeReaderClose && jeReaderClose.addEventListener('click', closeJournalReader);
+  jeReader && jeReader.addEventListener('click', e => { if (e.target === jeReader) closeJournalReader(); });
 
   jeMd && jeMd.addEventListener('paste', (e) => {
     const items = (e.clipboardData && e.clipboardData.items) || [];

@@ -1133,9 +1133,13 @@ svg.leaflet-image-layer.leaflet-interactive path {
   .node-hover-card .nhc-todo .pd {
     width: 5px; height: 5px; border-radius: 50%;
     margin-top: 6px; flex-shrink: 0;
-    background: var(--seal);
+    background: #ef4444;
   }
+  .node-hover-card .nhc-todo .pd.normal { background: #facc15; box-shadow: 0 0 0 1px rgba(0,0,0,0.08); }
+  .node-hover-card .nhc-todo .pd.low { background: var(--text-3); }
   .node-hover-card .nhc-todo.done .pd { background: var(--text-3); }
+  .node-hover-card .nhc-todo.done .pd.normal { background: var(--text-3); }
+  .node-hover-card .nhc-todo.done .pd.low { background: var(--text-3); }
   .node-hover-card .nhc-todo-text {
     overflow: hidden; text-overflow: ellipsis;
     display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical;
@@ -2301,10 +2305,10 @@ svg.leaflet-image-layer.leaflet-interactive path {
   }
   .priority-dot:hover { transform: scale(1.3); }
   .priority-dot.high {
-    background: var(--seal);
-    box-shadow: 0 0 6px rgba(244,63,94,0.6);
+    background: #ef4444;
+    box-shadow: 0 0 6px rgba(239,68,68,0.55);
   }
-  .priority-dot.normal { background: var(--seal); box-shadow: 0 0 4px rgba(245,158,11,0.4); }
+  .priority-dot.normal { background: #facc15; box-shadow: 0 0 0 1px rgba(0,0,0,0.08), 0 0 4px rgba(250,204,21,0.45); }
   .priority-dot.low { background: var(--text-3); }
 
   .todo-drag-handle {
@@ -2408,8 +2412,8 @@ svg.leaflet-image-layer.leaflet-interactive path {
     transition: all 0.2s;
   }
   .pri-btn .pd { width: 7px; height: 7px; border-radius: 50%; }
-  .pri-btn[data-pri="high"]   .pd { background: var(--seal); }
-  .pri-btn[data-pri="normal"] .pd { background: var(--seal); }
+  .pri-btn[data-pri="high"]   .pd { background: #ef4444; }
+  .pri-btn[data-pri="normal"] .pd { background: #facc15; box-shadow: 0 0 0 1px rgba(0,0,0,0.08); }
   .pri-btn[data-pri="low"]    .pd { background: var(--text-3); }
   .pri-btn.active {
     background: rgba(6,182,212,0.10);
@@ -5248,8 +5252,9 @@ svg.leaflet-image-layer.leaflet-interactive path {
       html += '</div>';
       html += '<div class="nhc-todos">';
       top3.forEach(t => {
+        const pri = t.priority || 'normal';
         html += '<div class="nhc-todo' + (t.done ? ' done' : '') + '">';
-        html += '<span class="pd"></span>';
+        html += '<span class="pd ' + pri + '"></span>';
         html += '<span class="nhc-todo-text">' + escapeHtml(t.text) + '</span>';
         html += '</div>';
       });
