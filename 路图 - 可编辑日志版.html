@@ -3357,6 +3357,20 @@ svg.leaflet-image-layer.leaflet-interactive path {
   }
   .je-act:hover { color: var(--seal); border-color: var(--seal); background: var(--seal-bg); }
 
+  /* 三态布局滑块：左=仅编辑 中=双屏 右=仅预览 */
+  .je-status-left { display: inline-flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .je-layout { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; flex-shrink: 0; }
+  .je-layout button {
+    height: 22px; min-width: 26px; padding: 0 9px; border: none; background: transparent;
+    color: var(--text-2); font-size: 11px; cursor: pointer; font-family: var(--font-mono);
+  }
+  .je-layout button + button { border-left: 1px solid var(--line); }
+  .je-layout button.active { background: var(--seal); color: #fff; }
+  .je-split.mode-edit .je-preview { display: none; }
+  .je-split.mode-preview .je-md { display: none; }
+  .je-split.mode-preview .je-preview { border-left: none; }
+  .je-preview u { text-decoration: underline; text-decoration-color: var(--seal); text-underline-offset: 2px; }
+
   /* 站点面板里的日志入口 */
   .panel-journal { padding: 12px 20px; border-top: 1px solid var(--line); }
   .panel-journal-btn {
@@ -4079,7 +4093,7 @@ svg.leaflet-image-layer.leaflet-interactive path {
               <button class="je-tool" data-md="italic" title="斜体（Ctrl+I）"><i>I</i></button>
               <button class="je-tool" data-md="strike" title="删除线"><s>S</s></button>
               <span class="je-tool-sep"></span>
-              <button class="je-tool" data-md="h2" title="小标题">标题</button>
+              <button class="je-tool" data-md="underline" title="下划线"><u>U</u></button>
               <button class="je-tool" data-md="quote" title="引用">引用</button>
               <button class="je-tool" data-md="ul" title="无序列表">• 列表</button>
               <button class="je-tool" data-md="hr" title="分割线">─ 分割</button>
@@ -4092,7 +4106,14 @@ svg.leaflet-image-layer.leaflet-interactive path {
               <div class="je-preview" id="jePreview"></div>
             </div>
             <div class="je-statusbar">
-              <span id="jeImgHint">图片存到「日志/img/」并相对引用 · 把整个日志文件夹发给别人即可带图</span>
+              <span class="je-status-left">
+                <span id="jeImgHint">图片存到「日志/img/」并相对引用 · 把整个日志文件夹发给别人即可带图</span>
+                <span class="je-layout" id="jeLayout" role="group" aria-label="编辑/预览布局">
+                  <button data-mode="edit" title="只看编辑">左</button>
+                  <button data-mode="split" class="active" title="双屏">中</button>
+                  <button data-mode="preview" title="只看预览">右</button>
+                </span>
+              </span>
               <span class="je-actions">
                 <button class="je-act" id="jeImportBtn" title="从 .md 文件载入本节点日志">⬆ 导入md</button>
                 <button class="je-act" id="jeExportBtn" title="下载本节点的 .md 文件">⬇ 导出md</button>
@@ -6982,7 +7003,7 @@ svg.leaflet-image-layer.leaflet-interactive path {
     const lines = (md || '').replace(/\r/g, '').split('\n');
     const entries = []; let cur = null;
     for (const line of lines) {
-      const h = line.match(/^##\s+(.*)$/);
+      const h = line.match(/^#\s+(.*)$/);
       if (h) {
         cur = { date: '', title: '', body: [] };
         const rest = h[1].trim();
@@ -7002,7 +7023,7 @@ svg.leaflet-image-layer.leaflet-interactive path {
   }
   function composeMd() {
     const parts = journalModel.map(e => {
-      const head = '## ' + (e.date ? e.date + ' · ' : '') + (e.title || '');
+      const head = '# ' + (e.date ? e.date + ' · ' : '') + (e.title || '');
       const body = e.body || '';
       return (head + (body ? '\n' + body : '')).replace(/\s+$/, '');
     });
@@ -7017,6 +7038,7 @@ svg.leaflet-image-layer.leaflet-interactive path {
     s = s.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
     s = s.replace(/(^|[^*])\*([^*\n]+)\*/g, '$1<em>$2</em>');
     s = s.replace(/~~([^~]+)~~/g, '<del>$1</del>');
+    s = s.replace(/\+\+([^+]+)\+\+/g, '<u>$1</u>');
     s = s.replace(/`([^`]+)`/g, '<code>$1</code>');
     return s;
   }
@@ -7343,12 +7365,32 @@ svg.leaflet-image-layer.leaflet-interactive path {
       if (cmd === 'bold') mdWrap('**', '**', '加粗文字');
       else if (cmd === 'italic') mdWrap('*', '*', '斜体');
       else if (cmd === 'strike') mdWrap('~~', '~~', '删除');
-      else if (cmd === 'h2') mdLine('### ');
+      else if (cmd === 'underline') mdWrap('++', '++', '下划线');
       else if (cmd === 'quote') mdLine('> ');
       else if (cmd === 'ul') mdLine('- ');
       else if (cmd === 'hr') mdLine('\n---\n');
     });
   });
+
+  // 编辑/预览三态布局：左=仅编辑 中=双屏 右=仅预览
+  const jeLayout = document.getElementById('jeLayout');
+  const jeSplitEl = document.querySelector('.journal-overlay .je-split');
+  function applyJournalLayout(mode) {
+    if (!jeSplitEl) return;
+    jeSplitEl.className = 'je-split mode-' + mode;
+    if (jeLayout) jeLayout.querySelectorAll('button').forEach(b => b.classList.toggle('active', b.dataset.mode === mode));
+    try { localStorage.setItem('journal-layout', mode); } catch (_) {}
+  }
+  if (jeLayout) {
+    jeLayout.addEventListener('click', e => {
+      const btn = e.target.closest('button[data-mode]');
+      if (btn) applyJournalLayout(btn.dataset.mode);
+    });
+    let savedMode = 'split';
+    try { savedMode = localStorage.getItem('journal-layout') || 'split'; } catch (_) {}
+    applyJournalLayout(savedMode);
+  }
+
   jeMd && jeMd.addEventListener('paste', (e) => {
     const items = (e.clipboardData && e.clipboardData.items) || [];
     const files = [];
