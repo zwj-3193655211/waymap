@@ -4185,7 +4185,7 @@ svg.leaflet-image-layer.leaflet-interactive path {
             </div>
             <div class="je-split">
               <textarea class="je-md" id="jeMd" spellcheck="false"
-                placeholder="用 Markdown 写日志…&#10;工具栏帮你插入格式，右侧实时预览。&#10;图片会以「日志/img/」下的文件引用，整个文件夹可分享。"></textarea>
+                placeholder="用 Markdown 写日志…&#10;工具栏帮你插入格式，右侧实时预览。&#10;图片会以「当前文件夹/img/」下的文件引用，整个文件夹可分享。"></textarea>
               <div class="je-preview" id="jePreview"></div>
             </div>
             <div class="je-statusbar">
@@ -6938,8 +6938,8 @@ svg.leaflet-image-layer.leaflet-interactive path {
   // ====== 站点日志（双击节点 / 面板按钮打开）======
   // ==========================================================
   // 站点日志（Markdown 文件版）
-  // 日志以 .md 文件存于用户选定的「日志」文件夹：日志/<tripId>_n<nodeId>.md
-  // 图片存于 日志/img/ 下，md 内用相对路径引用；整文件夹可直接分享。
+  // 日志以 .md 文件存于用户选定的文件夹：<folderName>/<tripId>_n<nodeId>.md
+  // 图片存于 <folderName>/img/ 下，md 内用相对路径引用；整文件夹可直接分享。
   // 桌面 Chrome/Edge 用 File System Access API 自动读写；不支持时降级为导入/导出 md。
   // ==========================================================
   const journalOverlay = document.getElementById('journalOverlay');
@@ -7082,7 +7082,7 @@ svg.leaflet-image-layer.leaflet-interactive path {
   function updateFolderBtn() {
     if (journalPathEl) {
       const node = getJournalNode();
-      journalPathEl.textContent = node ? '日志/' + journalFileBase(node) + '.md' : '';
+      journalPathEl.textContent = node ? (journalDirHandle ? journalDirHandle.name + '/' : '') + journalFileBase(node) + '.md' : '';
     }
     if (jeImgHint) jeImgHint.style.display = journalFsMode ? '' : 'none';
   }
