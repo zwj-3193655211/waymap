@@ -3221,6 +3221,7 @@ svg.leaflet-image-layer.leaflet-interactive path {
     padding: 9px 10px; margin-bottom: 6px;
     border-radius: 10px; border: 1px solid transparent;
     cursor: pointer; transition: all .15s;
+    position: relative;
   }
   .je-item:hover { background: var(--ink-bg); }
   .je-item.active { background: var(--seal-bg); border-color: var(--seal-soft); }
@@ -3233,6 +3234,18 @@ svg.leaflet-image-layer.leaflet-interactive path {
     font-size: 11px; color: var(--text-3); margin-top: 2px;
     overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
   }
+  .je-item-actions {
+    position: absolute; right: 6px; top: 50%; transform: translateY(-50%);
+    display: none; gap: 2px;
+  }
+  .je-item:hover .je-item-actions { display: flex; }
+  .je-item-actions button {
+    width: 22px; height: 22px; border: 1px solid var(--line); border-radius: 6px;
+    background: var(--card); color: var(--text-2); font-size: 12px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; padding: 0;
+  }
+  .je-item-actions button:hover { color: var(--seal); border-color: var(--seal); background: var(--seal-bg); }
+  .je-item-actions button:disabled { opacity: .35; cursor: not-allowed; color: var(--text-3); }
   .journal-list-empty { padding: 26px 14px; text-align: center; color: var(--text-3); font-size: 12px; line-height: 1.9; }
 
   .journal-editor { flex: 1; display: flex; flex-direction: column; min-width: 0; }
@@ -7133,15 +7146,19 @@ svg.leaflet-image-layer.leaflet-interactive path {
       const text = (en.body || '').replace(/[#>*_`~]/g, '').replace(/\s+/g, ' ').trim();
       const item = document.createElement('div');
       item.className = 'je-item' + (idx === journalEntryIdx ? ' active' : '');
+      item.dataset.index = String(idx);
       item.innerHTML = '<div class="je-date">' + (en.date || '未定日期') + '</div>' +
         '<div class="je-title">' + (en.title || '未命名日志') + '</div>' +
-        (text ? '<div class="je-excerpt">' + text.slice(0, 40) + '</div>' : '');
-      item.addEventListener('click', () => selectEntry(idx));
+        (text ? '<div class="je-excerpt">' + text.slice(0, 40) + '</div>' : '') +
+        '<div class="je-item-actions">' +
+        '<button class="je-move-up" data-move="-1" title="上移" ' + (idx === 0 ? 'disabled' : '') + '>↑</button>' +
+        '<button class="je-move-down" data-move="1" title="下移" ' + (idx === journalModel.length - 1 ? 'disabled' : '') + '>↓</button>' +
+        '</div>';
       journalEntryList.appendChild(item);
     });
   }
-  function selectEntry(idx) {
-    flushJournalSave();
+  async function selectEntry(idx) {
+    await flushJournalSave();
     journalEntryIdx = idx;
     const en = journalModel[idx];
     if (en) {
@@ -7160,9 +7177,9 @@ svg.leaflet-image-layer.leaflet-interactive path {
     else { jeMd.value = ''; jeDateInput.value = todayStr(); jeTitleInput.value = ''; jePreview.innerHTML = ''; }
   }
 
-  // ---------- 增删 ----------
-  function newJournalEntry() {
-    flushJournalSave();
+  // ---------- 增删 / 排序 ----------
+  async function newJournalEntry() {
+    await flushJournalSave();
     const entry = { date: todayStr(), title: '', body: '' };
     journalModel.unshift(entry);
     journalEntryIdx = 0;
@@ -7177,9 +7194,32 @@ svg.leaflet-image-layer.leaflet-interactive path {
     const name = en.title || en.date || '这篇日志';
     if (!confirm('删除「' + name + '」？该操作不可恢复。')) return;
     journalModel.splice(journalEntryIdx, 1);
-    journalEntryIdx = journalModel.length ? Math.max(0, journalEntryIdx - 1) : -1;
+    if (journalModel.length === 0) {
+      journalEntryIdx = -1;
+      renderJournalList();
+      renderEditorForNode();
+    } else {
+      journalEntryIdx = Math.max(0, Math.min(journalEntryIdx, journalModel.length - 1));
+      renderJournalList();
+      const en2 = journalModel[journalEntryIdx];
+      jeDateInput.value = en2.date || todayStr();
+      jeTitleInput.value = en2.title || '';
+      jeMd.value = en2.body || '';
+      renderPreview();
+    }
+    await flushJournalSave();
+  }
+  async function moveJournalEntry(delta) {
+    const idx = journalEntryIdx;
+    const newIdx = idx + delta;
+    if (idx < 0 || newIdx < 0 || newIdx >= journalModel.length) return;
+    await flushJournalSave();
+    const tmp = journalModel[idx];
+    journalModel[idx] = journalModel[newIdx];
+    journalModel[newIdx] = tmp;
+    journalEntryIdx = newIdx;
     renderJournalList();
-    renderEditorForNode();
+    renderPreview();
     await flushJournalSave();
   }
 
@@ -7357,6 +7397,19 @@ svg.leaflet-image-layer.leaflet-interactive path {
   journalOverlay && journalOverlay.addEventListener('click', (e) => { if (e.target === journalOverlay) closeJournal(); });
   journalNewBtn && journalNewBtn.addEventListener('click', newJournalEntry);
   jeDeleteBtn && jeDeleteBtn.addEventListener('click', deleteJournalEntry);
+  journalEntryList && journalEntryList.addEventListener('click', (e) => {
+    const moveBtn = e.target.closest('.je-item-actions button');
+    if (moveBtn) {
+      e.stopPropagation();
+      const delta = parseInt(moveBtn.dataset.move, 10);
+      moveJournalEntry(delta);
+      return;
+    }
+    const item = e.target.closest('.je-item');
+    if (item && item.dataset.index != null) {
+      selectEntry(parseInt(item.dataset.index, 10));
+    }
+  });
   jeDateInput && jeDateInput.addEventListener('change', onMetaChange);
   jeTitleInput && jeTitleInput.addEventListener('input', onMetaChange);
   jeMd && jeMd.addEventListener('input', onMdInput);
