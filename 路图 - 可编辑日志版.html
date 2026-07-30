@@ -4078,12 +4078,10 @@ svg.leaflet-image-layer.leaflet-interactive path {
               <button class="je-tool" data-md="bold" title="加粗（Ctrl+B）"><b>B</b></button>
               <button class="je-tool" data-md="italic" title="斜体（Ctrl+I）"><i>I</i></button>
               <button class="je-tool" data-md="strike" title="删除线"><s>S</s></button>
-              <button class="je-tool" data-md="code" title="行内代码">`代码`</button>
               <span class="je-tool-sep"></span>
               <button class="je-tool" data-md="h2" title="小标题">标题</button>
               <button class="je-tool" data-md="quote" title="引用">引用</button>
               <button class="je-tool" data-md="ul" title="无序列表">• 列表</button>
-              <button class="je-tool" data-md="ol" title="有序列表">1. 列表</button>
               <button class="je-tool" data-md="hr" title="分割线">─ 分割</button>
               <span class="je-tool-sep"></span>
               <button class="je-tool img" id="jeImgBtn" title="插入图片（也可直接粘贴 / 拖入）">🖼 图片</button>
@@ -7345,11 +7343,9 @@ svg.leaflet-image-layer.leaflet-interactive path {
       if (cmd === 'bold') mdWrap('**', '**', '加粗文字');
       else if (cmd === 'italic') mdWrap('*', '*', '斜体');
       else if (cmd === 'strike') mdWrap('~~', '~~', '删除');
-      else if (cmd === 'code') mdWrap('`', '`', 'code');
       else if (cmd === 'h2') mdLine('### ');
       else if (cmd === 'quote') mdLine('> ');
       else if (cmd === 'ul') mdLine('- ');
-      else if (cmd === 'ol') mdLine('1. ');
       else if (cmd === 'hr') mdLine('\n---\n');
     });
   });
