@@ -3156,22 +3156,49 @@ svg.leaflet-image-layer.leaflet-interactive path {
     backdrop-filter: blur(6px);
     -webkit-backdrop-filter: blur(6px);
   }
-  .journal-overlay.show { display: flex; align-items: center; justify-content: center; padding: 26px; }
+  .journal-overlay.show { display: block; padding: 26px; }
+  .journal-overlay.minimized-backdrop { background: transparent; backdrop-filter: none; -webkit-backdrop-filter: none; pointer-events: none; }
+  .journal-overlay.minimized-backdrop .journal-shell { pointer-events: auto; }
   .journal-shell {
-    width: min(1100px, 100%); height: min(760px, 100%);
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: min(1100px, calc(100% - 52px)); height: min(760px, calc(100% - 52px));
     background: var(--bg-paper);
     border: 1px solid var(--line-strong);
     border-radius: 16px;
     box-shadow: 0 24px 80px rgba(0, 0, 0, 0.45);
     display: flex; flex-direction: column;
     overflow: hidden;
-    transition: var(--transition-theme);
+    transition: box-shadow .2s, border-color .2s, background .2s;
   }
+  .journal-shell.dragging { transition: none; user-select: none; }
+  .journal-shell.maximized {
+    top: 0; left: 0; right: 0; bottom: 0;
+    width: auto; height: auto;
+    transform: none;
+    border-radius: 0;
+  }
+  .journal-shell.minimized {
+    top: auto; left: auto; right: 18px; bottom: 18px;
+    width: 280px; height: 46px;
+    transform: none;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.35);
+  }
+  .journal-shell.minimized .journal-body,
+  .journal-shell.minimized .jh-badge,
+  .journal-shell.minimized .jh-sub,
+  .journal-shell.minimized .jh-path { display: none; }
+  .journal-shell.minimized .journal-head { border-bottom: none; cursor: default; }
+  .journal-shell.minimized .jh-title { font-size: 14px; }
   .journal-head {
     display: flex; align-items: center; gap: 12px;
     padding: 14px 18px;
     border-bottom: 1px solid var(--line);
     flex-shrink: 0;
+    cursor: move;
   }
   .journal-head .jh-badge {
     font-family: var(--font-mono); font-size: 11px;
@@ -3199,6 +3226,21 @@ svg.leaflet-image-layer.leaflet-interactive path {
     flex-shrink: 0;
   }
   .journal-close:hover { color: var(--seal); border-color: var(--seal); background: var(--seal-bg); }
+  .jh-winbtns {
+    display: inline-flex; align-items: center; gap: 8px;
+    margin-left: 10px; flex-shrink: 0;
+  }
+  .jh-winbtn {
+    border: 1px solid var(--line); background: transparent;
+    color: var(--text-2); width: 28px; height: 28px;
+    border-radius: 6px; cursor: pointer; font-size: 13px; line-height: 1;
+    display: flex; align-items: center; justify-content: center;
+    transition: all .15s;
+  }
+  .jh-winbtn:hover { color: var(--seal); border-color: var(--seal); background: var(--seal-bg); }
+  .jh-winbtn.minimize:hover,
+  .jh-winbtn.maximize:hover { color: var(--ink-blue); border-color: var(--ink-blue); background: rgba(59,130,246,0.10); }
+  .jh-winbtn.close:hover { color: #fff; border-color: var(--seal); background: var(--seal); }
 
   .journal-body { flex: 1; display: flex; min-height: 0; }
   .journal-side {
@@ -3389,72 +3431,6 @@ svg.leaflet-image-layer.leaflet-interactive path {
   .je-split.mode-preview .je-preview { border-left: none; }
   .je-preview u { text-decoration: underline; text-decoration-color: var(--seal); text-underline-offset: 2px; }
 
-  /* 全屏阅读器 */
-  .je-reader {
-    display: none; position: fixed; inset: 0; z-index: 2000;
-    background: var(--bg-0); color: var(--text-0);
-    flex-direction: column;
-  }
-  .je-reader.show { display: flex; }
-  .je-reader:fullscreen { background: var(--bg-0); }
-  .je-reader-header {
-    display: flex; align-items: center; justify-content: space-between; gap: 16px;
-    padding: 14px 24px; border-bottom: 1px solid var(--line-soft);
-    background: var(--bg-glass); backdrop-filter: blur(12px); flex-shrink: 0;
-  }
-  .je-reader-title {
-    font-family: var(--font-serif); font-size: 17px; color: var(--text-0);
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-  }
-  .je-reader-title .sub {
-    font-family: var(--font-mono); font-size: 10px; color: var(--text-3); margin-left: 10px;
-  }
-  .je-reader-close {
-    border: 1px solid var(--line); background: transparent; color: var(--text-2);
-    border-radius: 8px; padding: 6px 12px; font-size: 12px; cursor: pointer;
-    font-family: var(--font-mono);
-  }
-  .je-reader-close:hover { color: var(--seal); border-color: var(--seal); background: var(--seal-bg); }
-  .je-reader-content {
-    flex: 1; min-height: 0; overflow-y: auto;
-    padding: 28px calc(50% - 360px); font-size: 16px; line-height: 1.95;
-  }
-  .je-reader-content h1, .je-reader-content h2, .je-reader-content h3, .je-reader-content h4 {
-    font-family: var(--font-serif); color: var(--text-0); margin: 18px 0 10px; line-height: 1.4;
-  }
-  .je-reader-content h1 { font-size: 26px; }
-  .je-reader-content h2 { font-size: 21px; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
-  .je-reader-content h3 { font-size: 18px; color: var(--seal); }
-  .je-reader-content p { margin: 12px 0; }
-  .je-reader-content ul, .je-reader-content ol { padding-left: 28px; margin: 12px 0; }
-  .je-reader-content li { margin: 5px 0; }
-  .je-reader-content blockquote {
-    margin: 14px 0; padding: 8px 18px;
-    border-left: 3px solid var(--seal-soft);
-    color: var(--text-2); background: var(--ink-bg);
-    border-radius: 0 10px 10px 0;
-  }
-  .je-reader-content img {
-    max-width: 100%; border-radius: 12px;
-    border: 1px solid var(--line); box-shadow: 0 4px 18px rgba(0,0,0,0.12);
-    margin: 14px 0; display: block;
-  }
-  .je-reader-content hr { border: none; border-top: 1px dashed var(--line-strong); margin: 20px 0; }
-  .je-reader-content code {
-    font-family: var(--font-mono); font-size: 13.5px;
-    background: var(--ink-bg); padding: 2px 6px; border-radius: 5px;
-  }
-  .je-reader-content pre {
-    background: var(--ink-bg); padding: 14px 16px; border-radius: 10px;
-    overflow-x: auto; border: 1px solid var(--line);
-  }
-  .je-reader-content a { color: var(--seal); }
-  @media (max-width: 920px) {
-    .je-reader-content { padding: 20px 22px; font-size: 15px; }
-    .je-reader-header { padding: 12px 16px; }
-    .je-reader-title { font-size: 15px; }
-  }
-
   /* 站点面板里的日志入口 */
   .panel-journal { padding: 12px 20px; border-top: 1px solid var(--line); }
   .panel-journal-btn {
@@ -3483,7 +3459,16 @@ svg.leaflet-image-layer.leaflet-interactive path {
 
   @media (max-width: 768px) {
     .journal-overlay.show { padding: 0; }
-    .journal-shell { width: 100%; height: 100%; border-radius: 0; border: none; }
+    .journal-shell {
+      top: 0; left: 0; right: 0; bottom: 0;
+      width: auto; height: auto;
+      transform: none;
+      border-radius: 0; border: none;
+    }
+    .journal-shell.minimized {
+      top: auto; left: auto; right: 10px; bottom: 10px;
+      width: 220px; height: 44px;
+    }
     .journal-body { flex-direction: column; }
     .journal-side {
       width: 100%; flex-direction: row; align-items: center;
@@ -4155,7 +4140,11 @@ svg.leaflet-image-layer.leaflet-interactive path {
           <div class="jh-title" id="journalNodeName">站点名称</div>
           <span class="jh-sub" id="journalNodeSub"></span>
           <span class="jh-path" id="journalPath"></span>
-          <button class="journal-close" id="journalCloseBtn" title="关闭（Esc）">✕</button>
+          <span class="jh-winbtns" id="jhWinBtns">
+            <button class="jh-winbtn minimize" data-win="minimize" title="最小化">—</button>
+            <button class="jh-winbtn maximize" id="journalMaximizeBtn" data-win="maximize" title="最大化">□</button>
+            <button class="jh-winbtn close" id="journalCloseBtn" data-win="close" title="关闭（Esc）">✕</button>
+          </span>
         </div>
         <div class="journal-body">
           <div class="journal-side">
@@ -4197,17 +4186,9 @@ svg.leaflet-image-layer.leaflet-interactive path {
                 <button data-mode="preview" title="只看预览">></button>
               </span>
               <span class="je-actions">
-                <button class="je-act" id="jeReaderBtn" title="全屏阅读当前章节">⛶ 全屏</button>
                 <button class="je-act" id="jeImportBtn" title="从 .md 文件载入本节点日志">⬆ 导入md</button>
                 <button class="je-act" id="jeExportBtn" title="下载本节点的 .md 文件">⬇ 导出md</button>
               </span>
-            </div>
-            <div class="je-reader" id="jeReader">
-              <div class="je-reader-header">
-                <div class="je-reader-title" id="jeReaderTitle">日志阅读</div>
-                <button class="je-reader-close" id="jeReaderClose" title="退出全屏（Esc）">✕ 关闭</button>
-              </div>
-              <div class="je-reader-content je-preview" id="jeReaderContent"></div>
             </div>
             <input type="file" id="jeFileInput" accept="image/*" multiple hidden />
             <input type="file" id="jeImportInput" accept=".md,text/markdown" hidden />
@@ -6952,10 +6933,14 @@ svg.leaflet-image-layer.leaflet-interactive path {
   // 桌面 Chrome/Edge 用 File System Access API 自动读写；不支持时降级为导入/导出 md。
   // ==========================================================
   const journalOverlay = document.getElementById('journalOverlay');
+  const journalShell = document.querySelector('.journal-shell');
+  const journalHead = document.querySelector('.journal-head');
   const journalBadgeEl = document.getElementById('journalBadge');
   const journalNodeNameEl = document.getElementById('journalNodeName');
   const journalNodeSubEl = document.getElementById('journalNodeSub');
   const journalCloseBtn = document.getElementById('journalCloseBtn');
+  const journalMaximizeBtn = document.getElementById('journalMaximizeBtn');
+  const jhWinBtns = document.getElementById('jhWinBtns');
   const journalPathEl = document.getElementById('journalPath');
   const journalNewBtn = document.getElementById('journalNewBtn');
   const journalEntryList = document.getElementById('journalEntryList');
@@ -6971,11 +6956,6 @@ svg.leaflet-image-layer.leaflet-interactive path {
   const jeImportBtn = document.getElementById('jeImportBtn');
   const jeImportInput = document.getElementById('jeImportInput');
   const jeExportBtn = document.getElementById('jeExportBtn');
-  const jeReaderBtn = document.getElementById('jeReaderBtn');
-  const jeReader = document.getElementById('jeReader');
-  const jeReaderContent = document.getElementById('jeReaderContent');
-  const jeReaderTitle = document.getElementById('jeReaderTitle');
-  const jeReaderClose = document.getElementById('jeReaderClose');
   const jeSaveState = document.getElementById('jeSaveState');
   const jeImgHint = document.getElementById('jeImgHint');
   const openJournalBtn = document.getElementById('openJournalBtn');
@@ -7469,6 +7449,109 @@ svg.leaflet-image-layer.leaflet-interactive path {
     showToast('已导入 ' + file.name, 'success', 2500);
   }
 
+  // ---------- 窗口控制（拖拽 / 最小化 / 最大化） ----------
+  let journalShellRect = null;
+  let journalDragState = null;
+  function resetJournalShellPos() {
+    if (!journalShell) return;
+    journalShell.style.top = ''; journalShell.style.left = ''; journalShell.style.right = ''; journalShell.style.bottom = '';
+    journalShell.style.width = ''; journalShell.style.height = '';
+    journalShell.classList.remove('maximized', 'minimized');
+    journalOverlay && journalOverlay.classList.remove('minimized-backdrop');
+    if (journalMaximizeBtn) journalMaximizeBtn.textContent = '□';
+  }
+  function toggleJournalMaximize() {
+    if (!journalShell) return;
+    const isMax = journalShell.classList.contains('maximized');
+    if (isMax) {
+      journalShell.classList.remove('maximized');
+      if (journalShellRect) {
+        journalShell.style.top = journalShellRect.top + 'px';
+        journalShell.style.left = journalShellRect.left + 'px';
+        journalShell.style.right = 'auto'; journalShell.style.bottom = 'auto';
+        journalShell.style.width = journalShellRect.width + 'px';
+        journalShell.style.height = journalShellRect.height + 'px';
+        journalShell.style.transform = 'none';
+      } else { resetJournalShellPos(); }
+      if (journalMaximizeBtn) journalMaximizeBtn.textContent = '□';
+    } else {
+      if (!journalShell.classList.contains('minimized')) {
+        const r = journalShell.getBoundingClientRect();
+        journalShellRect = { top: r.top, left: r.left, width: r.width, height: r.height };
+      }
+      journalShell.classList.remove('minimized');
+      journalShell.classList.add('maximized');
+      journalShell.style.top = '0'; journalShell.style.left = '0'; journalShell.style.right = '0'; journalShell.style.bottom = '0';
+      journalShell.style.width = 'auto'; journalShell.style.height = 'auto';
+      journalShell.style.transform = 'none';
+      journalOverlay && journalOverlay.classList.remove('minimized-backdrop');
+      if (journalMaximizeBtn) journalMaximizeBtn.textContent = '⧉';
+    }
+  }
+  function toggleJournalMinimize() {
+    if (!journalShell || !journalOverlay) return;
+    if (journalShell.classList.contains('minimized')) {
+      journalShell.classList.remove('minimized');
+      journalOverlay.classList.remove('minimized-backdrop');
+      if (journalShellRect) {
+        journalShell.style.top = journalShellRect.top + 'px';
+        journalShell.style.left = journalShellRect.left + 'px';
+        journalShell.style.right = 'auto'; journalShell.style.bottom = 'auto';
+        journalShell.style.width = journalShellRect.width + 'px';
+        journalShell.style.height = journalShellRect.height + 'px';
+        journalShell.style.transform = 'none';
+      } else { resetJournalShellPos(); }
+    } else {
+      if (!journalShell.classList.contains('maximized')) {
+        const r = journalShell.getBoundingClientRect();
+        journalShellRect = { top: r.top, left: r.left, width: r.width, height: r.height };
+      }
+      journalShell.classList.remove('maximized');
+      journalShell.classList.add('minimized');
+      journalOverlay.classList.add('minimized-backdrop');
+      journalShell.style.top = ''; journalShell.style.left = ''; journalShell.style.right = ''; journalShell.style.bottom = '';
+      journalShell.style.width = ''; journalShell.style.height = ''; journalShell.style.transform = 'none';
+      if (journalMaximizeBtn) journalMaximizeBtn.textContent = '□';
+    }
+  }
+  function onJournalHeadMouseDown(e) {
+    if (!journalShell || !journalHead) return;
+    // 点到按钮时不拖拽
+    if (e.target.closest('.jh-winbtn') || e.target.closest('.journal-close')) return;
+    const rect = journalShell.getBoundingClientRect();
+    journalDragState = {
+      dx: e.clientX - rect.left,
+      dy: e.clientY - rect.top,
+      width: rect.width,
+      height: rect.height
+    };
+    journalShell.classList.add('dragging');
+    document.body.style.userSelect = 'none';
+  }
+  function onJournalDragMove(e) {
+    if (!journalDragState || !journalShell) return;
+    e.preventDefault();
+    if (journalShell.classList.contains('maximized') || journalShell.classList.contains('minimized')) {
+      // 从最大化/最小化拖出时先还原到鼠标位置
+      journalShell.classList.remove('maximized', 'minimized');
+      journalOverlay && journalOverlay.classList.remove('minimized-backdrop');
+      journalShell.style.width = journalDragState.width + 'px';
+      journalShell.style.height = journalDragState.height + 'px';
+      if (journalMaximizeBtn) journalMaximizeBtn.textContent = '□';
+    }
+    journalShell.style.transform = 'none';
+    journalShell.style.top = (e.clientY - journalDragState.dy) + 'px';
+    journalShell.style.left = (e.clientX - journalDragState.dx) + 'px';
+    journalShell.style.right = 'auto'; journalShell.style.bottom = 'auto';
+    journalShellRect = { top: e.clientY - journalDragState.dy, left: e.clientX - journalDragState.dx, width: journalDragState.width, height: journalDragState.height };
+  }
+  function onJournalDragEnd() {
+    if (!journalDragState) return;
+    journalDragState = null;
+    journalShell && journalShell.classList.remove('dragging');
+    document.body.style.userSelect = '';
+  }
+
   // ---------- 打开 / 关闭 ----------
   function isJournalOpen() { return journalOverlay && journalOverlay.classList.contains('show'); }
   async function openJournal(nodeId) {
@@ -7491,13 +7574,15 @@ svg.leaflet-image-layer.leaflet-interactive path {
     renderJournalList();
     renderEditorForNode();
     if (ok && journalModel.length === 0) setJournalCount(node, 0);
-    jeSaveState.textContent = ok ? '' : '未连接文件夹 · 用「导入/导出」或上方连接';
+    jeSaveState.textContent = ok ? '' : '未连接文件夹 · 用「导入/导出」';
     jeSaveState.classList.remove('saved');
+    resetJournalShellPos();
     journalOverlay.classList.add('show');
   }
   async function closeJournal() {
     await flushJournalSave();
     journalOverlay.classList.remove('show');
+    resetJournalShellPos();
     journalNodeId = null; journalEntryIdx = -1; journalModel = [];
     updatePanelJournalCount();
   }
@@ -7523,7 +7608,20 @@ svg.leaflet-image-layer.leaflet-interactive path {
 
   // ---------- 事件绑定 ----------
   journalCloseBtn && journalCloseBtn.addEventListener('click', closeJournal);
-  journalOverlay && journalOverlay.addEventListener('click', (e) => { if (e.target === journalOverlay) closeJournal(); });
+  journalMaximizeBtn && journalMaximizeBtn.addEventListener('click', (e) => { e.stopPropagation(); toggleJournalMaximize(); });
+  jhWinBtns && jhWinBtns.addEventListener('click', (e) => {
+    const btn = e.target.closest('.jh-winbtn');
+    if (!btn) return;
+    e.stopPropagation();
+    const action = btn.dataset.win;
+    if (action === 'minimize') toggleJournalMinimize();
+    else if (action === 'maximize') toggleJournalMaximize();
+    else if (action === 'close') closeJournal();
+  });
+  journalHead && journalHead.addEventListener('mousedown', onJournalHeadMouseDown);
+  document.addEventListener('mousemove', onJournalDragMove);
+  document.addEventListener('mouseup', onJournalDragEnd);
+  journalOverlay && journalOverlay.addEventListener('click', (e) => { if (e.target === journalOverlay && !journalOverlay.classList.contains('minimized-backdrop')) closeJournal(); });
   journalNewBtn && journalNewBtn.addEventListener('click', newJournalEntry);
   jeDeleteBtn && jeDeleteBtn.addEventListener('click', deleteJournalEntry);
   journalEntryList && journalEntryList.addEventListener('click', (e) => {
@@ -7571,32 +7669,6 @@ svg.leaflet-image-layer.leaflet-interactive path {
     try { localStorage.setItem('journal-layout', mode); } catch (_) {}
   }
 
-  // 全屏阅读当前章节
-  function openJournalReader() {
-    if (!jeReader || !jeReaderContent) return;
-    const en = journalModel[journalEntryIdx];
-    if (jeReaderTitle) {
-      const t = (en && (en.date || en.title)) ? ((en.date || '') + (en.date && en.title ? ' · ' : '') + (en.title || '')) : '日志阅读';
-      jeReaderTitle.innerHTML = escapeHtml(t) + '<span class="sub">按 Esc 退出</span>';
-    }
-    jeReaderContent.innerHTML = jePreview ? jePreview.innerHTML : '';
-    jeReader.classList.add('show');
-    if (jeReader.requestFullscreen) {
-      jeReader.requestFullscreen().catch(() => {});
-    }
-  }
-  function closeJournalReader() {
-    if (!jeReader) return;
-    jeReader.classList.remove('show');
-    if (document.fullscreenElement && document.exitFullscreen) {
-      document.exitFullscreen().catch(() => {});
-    }
-  }
-  document.addEventListener('fullscreenchange', () => {
-    if (jeReader && !document.fullscreenElement && jeReader.classList.contains('show')) {
-      jeReader.classList.remove('show');
-    }
-  });
   if (jeLayout) {
     jeLayout.addEventListener('click', e => {
       const btn = e.target.closest('button[data-mode]');
@@ -7606,10 +7678,6 @@ svg.leaflet-image-layer.leaflet-interactive path {
     try { savedMode = localStorage.getItem('journal-layout') || 'split'; } catch (_) {}
     applyJournalLayout(savedMode);
   }
-  jeReaderBtn && jeReaderBtn.addEventListener('click', openJournalReader);
-  jeReaderClose && jeReaderClose.addEventListener('click', closeJournalReader);
-  jeReader && jeReader.addEventListener('click', e => { if (e.target === jeReader) closeJournalReader(); });
-
   jeMd && jeMd.addEventListener('paste', (e) => {
     const items = (e.clipboardData && e.clipboardData.items) || [];
     const files = [];

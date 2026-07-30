@@ -32,7 +32,7 @@ Open `路图 - 可编辑日志版.html` and double-click a stop in the left node
 - **Sectioning**: one `#` heading separates journal entries (`# date · title`), with the body below it; `##` / `###` are sub-headings within an entry and never split it into separate entries.
 - **Single-entry preview**: the right-side preview renders only the entry you are currently editing, for focus.
 - **Three-state layout**: a bottom slider switches between "edit only / split / preview only" and remembers your last choice.
-- **Fullscreen reader**: click `⛶ 全屏` in the status bar for a distraction-free reading mode (large type, roomy line height, responsive images); press `Esc` to exit.
+- **Windowed editor**: drag the journal panel by its title bar to move it around; the title bar has minimize / maximize / close buttons. Maximize fills the browser viewport, minimize collapses to a small bar at the bottom-right, and `Esc` closes the window.
 - **Local file storage**: on first use, connect a "日志" (journal) folder (Chrome / Edge desktop). Journals are saved as `.md` files under that folder, images go to `日志/img/`; the connection is restored automatically on reload. If unavailable (e.g. opened via `file://`, mobile, or a stale handle), it re-prompts for the folder or falls back to "import / export .md".
 - **Relative path display**: the panel header shows the current journal file's relative path (e.g. `日志/trip_xxx_n4.md`) instead of a "connect folder" button.
 
