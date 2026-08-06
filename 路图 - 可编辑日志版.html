@@ -3251,6 +3251,24 @@ svg.leaflet-image-layer.leaflet-interactive path {
     display: flex; flex-direction: column;
     background: var(--bg-glass);
   }
+  .journal-side-head {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 12px 2px; flex-shrink: 0;
+  }
+  .journal-side-title { font-family: var(--font-mono); font-size: 11px; color: var(--text-3); letter-spacing: 1px; }
+  .journal-side-toggle {
+    width: 22px; height: 22px; border: 1px solid var(--line); border-radius: 6px;
+    background: transparent; color: var(--text-2); cursor: pointer; font-size: 9px;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-family: var(--font-mono); transition: all .15s;
+  }
+  .journal-side-toggle:hover { color: var(--seal); border-color: var(--seal); background: var(--seal-bg); }
+  .journal-side.collapsed { width: 42px; }
+  .journal-side.collapsed .journal-side-head { padding: 10px 0; justify-content: center; }
+  .journal-side.collapsed .journal-side-title,
+  .journal-side.collapsed .journal-new-btn,
+  .journal-side.collapsed .journal-entry-list { display: none; }
+  .journal-side.collapsed .journal-side-toggle { transform: rotate(180deg); }
   .journal-new-btn {
     margin: 12px 12px 8px;
     padding: 9px 12px;
@@ -3472,6 +3490,9 @@ svg.leaflet-image-layer.leaflet-interactive path {
       width: 100%; flex-direction: row; align-items: center;
       border-right: none; border-bottom: 1px solid var(--line);
     }
+    .journal-side-head { padding: 6px 8px 6px 12px; }
+    .journal-side.collapsed { width: 100%; height: 36px; justify-content: center; }
+    .journal-side.collapsed .journal-side-head { padding: 7px 8px; }
     .journal-new-btn { margin: 8px; white-space: nowrap; }
     .journal-entry-list { display: flex; gap: 6px; padding: 8px; overflow-x: auto; overflow-y: hidden; }
     .je-item { min-width: 130px; margin-bottom: 0; flex-shrink: 0; }
@@ -4144,7 +4165,11 @@ svg.leaflet-image-layer.leaflet-interactive path {
           </span>
         </div>
         <div class="journal-body">
-          <div class="journal-side">
+          <div class="journal-side" id="journalSide">
+            <div class="journal-side-head">
+              <span class="journal-side-title">日志索引</span>
+              <button class="journal-side-toggle" id="journalSideToggle" title="折叠索引">◀</button>
+            </div>
             <button class="journal-new-btn" id="journalNewBtn">＋ 新建日志</button>
             <div class="journal-entry-list" id="journalEntryList"></div>
           </div>
@@ -6936,6 +6961,8 @@ svg.leaflet-image-layer.leaflet-interactive path {
   const journalPathEl = document.getElementById('journalPath');
   const journalNewBtn = document.getElementById('journalNewBtn');
   const journalEntryList = document.getElementById('journalEntryList');
+  const journalSide = document.getElementById('journalSide');
+  const journalSideToggle = document.getElementById('journalSideToggle');
   const journalEditor = document.getElementById('journalEditor');
   const journalEditorEmpty = document.getElementById('journalEditorEmpty');
   const jeDateInput = document.getElementById('jeDateInput');
@@ -7643,6 +7670,21 @@ svg.leaflet-image-layer.leaflet-interactive path {
   document.addEventListener('mousemove', onJournalDragMove);
   document.addEventListener('mouseup', onJournalDragEnd);
   journalOverlay && journalOverlay.addEventListener('click', (e) => { if (e.target === journalOverlay && !journalOverlay.classList.contains('minimized-backdrop')) closeJournal(); });
+  // 左侧索引折叠 / 展开
+  const JLSIDE_KEY = 'journal-side-collapsed';
+  function setJournalSideCollapsed(collapsed) {
+    if (!journalSide) return;
+    journalSide.classList.toggle('collapsed', collapsed);
+    if (journalSideToggle) {
+      journalSideToggle.textContent = collapsed ? '▶' : '◀';
+      journalSideToggle.title = collapsed ? '展开索引' : '折叠索引';
+    }
+    try { localStorage.setItem(JLSIDE_KEY, collapsed ? '1' : '0'); } catch (_) {}
+  }
+  journalSideToggle && journalSideToggle.addEventListener('click', () => setJournalSideCollapsed(!journalSide.classList.contains('collapsed')));
+  let sideCollapsed = false;
+  try { sideCollapsed = localStorage.getItem(JLSIDE_KEY) === '1'; } catch (_) {}
+  setJournalSideCollapsed(sideCollapsed);
   journalNewBtn && journalNewBtn.addEventListener('click', newJournalEntry);
   jeDeleteBtn && jeDeleteBtn.addEventListener('click', deleteJournalEntry);
   journalEntryList && journalEntryList.addEventListener('click', (e) => {
