@@ -3221,6 +3221,8 @@ svg.leaflet-image-layer.leaflet-interactive path {
     cursor: pointer; text-decoration: underline; text-decoration-style: dotted;
   }
   .jh-path:hover { color: var(--seal); }
+  .jh-path.lost { color: var(--seal); font-weight: 600; animation: jhPathFlash 1.4s ease-in-out infinite; }
+  @keyframes jhPathFlash { 0%, 100% { opacity: 1; } 50% { opacity: .4; } }
   .journal-close {
     border: 1px solid var(--line); background: transparent;
     color: var(--text-2); width: 30px; height: 30px;
@@ -7091,6 +7093,14 @@ svg.leaflet-image-layer.leaflet-interactive path {
       journalPathEl.textContent = node ? (journalDirHandle ? journalDirHandle.name + '/' : '') + journalFileBase(node) + '.md' : '';
     }
     if (jeImgHint) jeImgHint.style.display = journalFsMode ? '' : 'none';
+    if (journalFsMode) markFolderLost(false);
+  }
+  let journalNeedReconnect = false;   // 文件夹被移动后重连时，保留当前未保存内容
+  function markFolderLost(lost) {
+    if (journalPathEl) {
+      journalPathEl.classList.toggle('lost', lost);
+      journalPathEl.title = lost ? '日志文件夹已失效，点击重新选择文件夹' : '点击重新选择日志文件夹';
+    }
   }
 
   async function switchJournalFolder() {
@@ -7109,6 +7119,13 @@ svg.leaflet-image-layer.leaflet-interactive path {
     await _idbSet(JIDB_KEY, h).catch(() => {});
     updateFolderBtn();
     const node = getJournalNode();
+    if (node && journalNeedReconnect) {
+      // 文件夹被移动后重连：保留当前未保存内容并写回新位置
+      journalNeedReconnect = false;
+      await flushJournalSave();
+      showToast('已重新连接日志文件夹，未保存内容已写回', 'success', 3000);
+      return;
+    }
     if (node) {
       const base = journalFileBase(node);
       const raw = await readNodeMd(base);
@@ -7166,7 +7183,12 @@ svg.leaflet-image-layer.leaflet-interactive path {
       await w.write(text); await w.close();
       return true;
     } catch (e) {
-      if (isFsStaleError(e)) await invalidateJournalDir();
+      if (isFsStaleError(e)) {
+        await invalidateJournalDir();
+        const err = new Error('日志文件夹被移动或删除，请重新选择');
+        err.isFolderLost = true;
+        throw err;
+      }
       throw e;
     }
   }
@@ -7179,7 +7201,12 @@ svg.leaflet-image-layer.leaflet-interactive path {
       const w = await f.createWritable(); await w.write(blob); await w.close();
       return 'img/' + name;
     } catch (e) {
-      if (isFsStaleError(e)) await invalidateJournalDir();
+      if (isFsStaleError(e)) {
+        await invalidateJournalDir();
+        const err = new Error('日志文件夹被移动或删除，请重新选择');
+        err.isFolderLost = true;
+        throw err;
+      }
       throw e;
     }
   }
@@ -7428,9 +7455,16 @@ svg.leaflet-image-layer.leaflet-interactive path {
       jeSaveState.textContent = '✓ 已保存 ' + new Date().toTimeString().slice(0, 5);
       jeSaveState.classList.add('saved');
     } catch (e) {
-      jeSaveState.textContent = '⚠ 保存失败';
       jeSaveState.classList.remove('saved');
-      showToast('⚠️ 写入日志文件失败：' + (e && e.message ? e.message : e), 'warn', 4000);
+      if (e && e.isFolderLost) {
+        journalNeedReconnect = true;
+        markFolderLost(true);
+        jeSaveState.textContent = '⚠ 文件夹已失效，点击顶部路径重连';
+        showToast('⚠️ 日志文件夹被移动或删除，当前内容暂存于浏览器。请点击窗口顶部的日志路径重新选择文件夹。', 'warn', 5000);
+      } else {
+        jeSaveState.textContent = '⚠ 保存失败';
+        showToast('⚠️ 写入日志文件失败：' + (e && e.message ? e.message : e), 'warn', 4000);
+      }
     }
     updatePanelJournalCount();
   }
@@ -7477,7 +7511,7 @@ svg.leaflet-image-layer.leaflet-interactive path {
     if (imgs.length === 0) return;
     const node = getJournalNode();
     for (const f of imgs) {
-      let ref = null;
+      let ref = null, imgErr = null;
       try {
         const blob = await compressImage(f);
         if (journalFsMode && node) {
@@ -7486,8 +7520,14 @@ svg.leaflet-image-layer.leaflet-interactive path {
         } else {
           ref = '![](' + (await blobToDataURL(blob)) + ')';
         }
-      } catch (_) { ref = null; }
-      if (!ref) { showToast('⚠️ 有一张图片处理失败', 'warn'); continue; }
+      } catch (e) {
+        imgErr = e;
+        if (e && e.isFolderLost) { journalNeedReconnect = true; markFolderLost(true); }
+      }
+      if (!ref) {
+        showToast(imgErr && imgErr.isFolderLost ? '⚠️ 日志文件夹已失效，请点击顶部路径重新选择后重试' : '⚠️ 有一张图片处理失败', 'warn');
+        continue;
+      }
       const s = jeMd.selectionStart, e = jeMd.selectionEnd, v = jeMd.value;
       const sep = (s > 0 && v[s - 1] !== '\n') ? '\n' : '';
       jeMd.value = v.slice(0, s) + sep + ref + '\n' + v.slice(e);
@@ -7615,6 +7655,7 @@ svg.leaflet-image-layer.leaflet-interactive path {
     journalNodeSubEl.textContent = node.subtitle || '';
     updateFolderBtn();
     const ok = await connectJournalFolder(false);
+    if (ok) journalNeedReconnect = false;
     const base = journalFileBase(node);
     const raw = ok ? await readNodeMd(base) : null;
     journalModel = parseMd(raw || '');
