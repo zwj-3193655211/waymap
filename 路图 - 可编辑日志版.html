@@ -4182,13 +4182,8 @@ svg.leaflet-image-layer.leaflet-interactive path {
                 <button data-mode="split" class="active" title="双屏">O</button>
                 <button data-mode="preview" title="只看预览">></button>
               </span>
-              <span class="je-actions">
-                <button class="je-act" id="jeImportBtn" title="从 .md 文件载入本节点日志">⬆ 导入md</button>
-                <button class="je-act" id="jeExportBtn" title="下载本节点的 .md 文件">⬇ 导出md</button>
-              </span>
             </div>
             <input type="file" id="jeFileInput" accept="image/*" multiple hidden />
-            <input type="file" id="jeImportInput" accept=".md,text/markdown" hidden />
           </div>
         </div>
       </div>
@@ -6927,7 +6922,7 @@ svg.leaflet-image-layer.leaflet-interactive path {
   // 站点日志（Markdown 文件版）
   // 日志以 .md 文件存于用户选定的文件夹：<folderName>/<tripId>_n<nodeId>.md
   // 图片存于 <folderName>/img/ 下，md 内用相对路径引用；整文件夹可直接分享。
-  // 桌面 Chrome/Edge 用 File System Access API 自动读写；不支持时降级为导入/导出 md。
+  // 桌面 Chrome/Edge 用 File System Access API 自动读写；不支持时日志暂存于浏览器。
   // ==========================================================
   const journalOverlay = document.getElementById('journalOverlay');
   const journalShell = document.querySelector('.journal-shell');
@@ -6950,9 +6945,6 @@ svg.leaflet-image-layer.leaflet-interactive path {
   const jePreview = document.getElementById('jePreview');
   const jeImgBtn = document.getElementById('jeImgBtn');
   const jeFileInput = document.getElementById('jeFileInput');
-  const jeImportBtn = document.getElementById('jeImportBtn');
-  const jeImportInput = document.getElementById('jeImportInput');
-  const jeExportBtn = document.getElementById('jeExportBtn');
   const jeSaveState = document.getElementById('jeSaveState');
   const jeImgHint = document.getElementById('jeImgHint');
   const openJournalBtn = document.getElementById('openJournalBtn');
@@ -7058,7 +7050,7 @@ svg.leaflet-image-layer.leaflet-interactive path {
       h = await window.showDirectoryPicker({ mode: 'readwrite', id: 'journal-folder' });
     } catch (err) {
       journalFsMode = false; updateFolderBtn();
-      if (err && err.name !== 'AbortError') showToast('未连接「日志」文件夹：将用导入 / 导出方式处理', 'warn', 3200);
+      if (err && err.name !== 'AbortError') showToast('未连接「日志」文件夹，日志暂存于浏览器', 'warn', 3200);
       return false;
     }
     journalDirHandle = h; journalFsMode = true;
@@ -7083,7 +7075,7 @@ svg.leaflet-image-layer.leaflet-interactive path {
     try {
       h = await window.showDirectoryPicker({ mode: 'readwrite', id: 'journal-folder' });
     } catch (err) {
-      if (err && err.name !== 'AbortError') showToast('未连接「日志」文件夹：将用导入 / 导出方式处理', 'warn', 3200);
+      if (err && err.name !== 'AbortError') showToast('未连接「日志」文件夹，日志暂存于浏览器', 'warn', 3200);
       return;
     }
     journalDirHandle = h; journalFsMode = true;
@@ -7239,7 +7231,7 @@ svg.leaflet-image-layer.leaflet-interactive path {
       if (/^\s*$/.test(line)) { closeList(); i++; continue; }
       closeList(); let para = line; i++;
       while (i < lines.length && !/^\s*$/.test(lines[i]) && !/^(#{1,6})\s/.test(lines[i]) && !/^>\s?/.test(lines[i]) && !/^\s*[-*+]\s+/.test(lines[i]) && !/^\s*\d+\.\s+/.test(lines[i]) && !/^```/.test(lines[i]) && !/^(\s*[-*_])\s*(\s*[-*_]\s*){2,}$/.test(lines[i])) { para += '\n' + lines[i]; i++; }
-      html += '<p>' + mdInline(para) + '</p>';
+      html += '<p>' + mdInline(para).replace(/^[ \t]+/gm, (m) => '&nbsp;'.repeat(m.replace(/\t/g, '  ').length)) + '</p>';
     }
     closeList();
     return html;
@@ -7399,7 +7391,7 @@ svg.leaflet-image-layer.leaflet-interactive path {
     en.body = jeMd.value;
     setJournalCount(node, journalModel.length);
     if (!journalFsMode) {
-      jeSaveState.textContent = '⚠ 未连接文件夹，记得导出';
+      jeSaveState.textContent = '⚠ 未连接文件夹，日志暂存于浏览器';
       jeSaveState.classList.remove('saved');
       updatePanelJournalCount();
       return;
@@ -7476,28 +7468,6 @@ svg.leaflet-image-layer.leaflet-interactive path {
     }
     jeMd.focus();
     onMdInput();
-  }
-
-  // ---------- 导入 / 导出 md ----------
-  function exportCurrentMd() {
-    const node = getJournalNode(); if (!node) return;
-    const base = journalFileBase(node);
-    const blob = new Blob([composeMd()], { type: 'text/markdown;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.download = base + '.md'; a.href = url; a.click();
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
-    showToast('已导出 ' + base + '.md', 'success', 2500);
-  }
-  async function importMdFile(file) {
-    const node = getJournalNode(); if (!node) return;
-    const text = await file.text();
-    journalModel = parseMd(text);
-    if (journalModel.length === 0) journalModel = [{ date: todayStr(), title: file.name.replace(/\.md$/i, ''), body: text.trim() }];
-    journalEntryIdx = journalModel.length - 1;
-    renderJournalList(); renderEditorForNode();
-    await flushJournalSave();
-    showToast('已导入 ' + file.name, 'success', 2500);
   }
 
   // ---------- 窗口控制（拖拽 / 最小化 / 最大化） ----------
@@ -7625,7 +7595,7 @@ svg.leaflet-image-layer.leaflet-interactive path {
     renderJournalList();
     renderEditorForNode();
     if (ok && journalModel.length === 0) setJournalCount(node, 0);
-    jeSaveState.textContent = ok ? '' : '未连接文件夹 · 用「导入/导出」';
+    jeSaveState.textContent = ok ? '' : '未连接文件夹 · 日志暂存于浏览器';
     jeSaveState.classList.remove('saved');
     resetJournalShellPos();
     journalOverlay.classList.add('show');
@@ -7691,11 +7661,46 @@ svg.leaflet-image-layer.leaflet-interactive path {
   jeDateInput && jeDateInput.addEventListener('change', onMetaChange);
   jeTitleInput && jeTitleInput.addEventListener('input', onMetaChange);
   jeMd && jeMd.addEventListener('input', onMdInput);
+  // Tab / Shift+Tab：首行缩进（插入制表符）与多行缩进/反缩进
+  jeMd && jeMd.addEventListener('keydown', (e) => {
+    if (e.key !== 'Tab') return;
+    e.preventDefault();
+    const v = jeMd.value;
+    let s = jeMd.selectionStart, en = jeMd.selectionEnd;
+    const sel = v.slice(s, en);
+    if (sel.indexOf('\n') !== -1) {
+      // 多行选中：逐行缩进 / 反缩进
+      const ls = v.lastIndexOf('\n', s - 1) + 1;
+      let le = v.indexOf('\n', en); if (le === -1) le = v.length;
+      const body = v.slice(ls, le);
+      const out = e.shiftKey
+        ? body.split('\n').map(l => l.replace(/^\t|^ {1,2}/, '')).join('\n')
+        : body.split('\n').map(l => '\t' + l).join('\n');
+      jeMd.value = v.slice(0, ls) + out + v.slice(le);
+      const delta = out.length - body.length;
+      jeMd.selectionStart = e.shiftKey ? Math.max(ls, s + delta) : s + delta;
+      jeMd.selectionEnd = en + delta;
+    } else if (e.shiftKey) {
+      // 无选中 + Shift+Tab：去掉当前行行首的制表符或 1~2 个空格
+      const ls = v.lastIndexOf('\n', s - 1) + 1;
+      const le = v.indexOf('\n', ls) === -1 ? v.length : v.indexOf('\n', ls);
+      const line = v.slice(ls, le);
+      const m = line.match(/^\t|^ {1,2}/);
+      if (m) {
+        const removed = m[0].length;
+        jeMd.value = v.slice(0, ls) + line.slice(removed) + v.slice(le);
+        const cursor = Math.max(ls, s - removed);
+        jeMd.selectionStart = jeMd.selectionEnd = cursor;
+      }
+    } else {
+      // 光标处插入一个制表符（首行缩进）
+      jeMd.value = v.slice(0, s) + '\t' + v.slice(en);
+      jeMd.selectionStart = jeMd.selectionEnd = s + 1;
+    }
+    onMdInput();
+  });
   jeImgBtn && jeImgBtn.addEventListener('click', () => jeFileInput && jeFileInput.click());
   jeFileInput && jeFileInput.addEventListener('change', () => { insertImages(jeFileInput.files); jeFileInput.value = ''; });
-  jeImportBtn && jeImportBtn.addEventListener('click', () => jeImportInput && jeImportInput.click());
-  jeImportInput && jeImportInput.addEventListener('change', () => { if (jeImportInput.files[0]) importMdFile(jeImportInput.files[0]); jeImportInput.value = ''; });
-  jeExportBtn && jeExportBtn.addEventListener('click', exportCurrentMd);
   document.querySelectorAll('.je-tool[data-md]').forEach(btn => {
     btn.addEventListener('mousedown', e => e.preventDefault());
     btn.addEventListener('click', () => {
